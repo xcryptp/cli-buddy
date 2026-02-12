@@ -43,9 +43,26 @@ jobs:
           releaseBody: |
             ## CLI Buddy ${{ github.ref_name }}
 
+            Clipboard manager + WSL2 monitor + Claude Code session manager for Windows developers
+
             ### Download
-            - **`CLI.Buddy.exe`** — 포터블 (설치 없이 바로 실행)
-            - **`CLI.Buddy_x64-setup.exe`** — 설치형 (자동시작, 시작메뉴 등록)
+            | File | Description |
+            |------|-------------|
+            | **`CLI.Buddy.exe`** | Portable — download and run directly |
+            | `CLI.Buddy_x64-setup.exe` | Installer — auto-start, start menu |
+
+            ### What's New in v0.1.1
+            - **WSL2 Vmmem memory monitoring** — real-time status bar + DevTools panel
+            - **Claude Code session manager** — list sessions, one-click resume with flags
+            - **`--dangerously-skip-permissions` toggle** — quick flag for resume commands
+            - **WSL restart** — from tray menu or DevTools panel
+            - **Auto-update checker** — notifies when new version available
+            - **Global shortcut key recorder** — press combo to set (not text input)
+            - **Popup near cursor** — opens near mouse, not screen center
+            - **Text expand** — click to expand long text entries
+            - **Image zoom** — click to toggle original size
+            - **Better taskbar icon** — ICO with 7 sizes
+            - **Fixed duplicate tray icon**
           releaseDraft: false
           prerelease: false
 
