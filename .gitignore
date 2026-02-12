@@ -26,3 +26,6 @@ src-tauri/gen
 *.njsproj
 *.sln
 *.sw?
+
+# Dev notes (local only)
+.dev-notes/
