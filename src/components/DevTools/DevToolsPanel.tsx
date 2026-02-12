@@ -9,6 +9,9 @@ import {
   AlertTriangle,
   Cpu,
   HardDrive,
+  RefreshCw,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
 import { useScreenshotStore } from "../../stores/screenshotStore";
 import type { VmmemStats, ClaudeSession } from "../../types";
@@ -16,27 +19,31 @@ import type { VmmemStats, ClaudeSession } from "../../types";
 export function DevToolsPanel() {
   const t = useScreenshotStore((s) => s.t);
   const [stats, setStats] = useState<VmmemStats | null>(null);
+  const [wslAvailable, setWslAvailable] = useState<boolean | null>(null);
   const [sessions, setSessions] = useState<ClaudeSession[]>([]);
   const [restarting, setRestarting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [skipPermissions, setSkipPermissions] = useState(false);
 
   // Fetch Vmmem stats
   const fetchStats = useCallback(async () => {
     try {
       const data = await invoke<VmmemStats>("get_vmmem_stats");
       setStats(data);
-    } catch (e) {
-      console.error("Failed to get vmmem stats:", e);
+      setWslAvailable(true);
+    } catch {
+      setStats(null);
+      if (wslAvailable === null) setWslAvailable(false);
     }
-  }, []);
+  }, [wslAvailable]);
 
   // Fetch Claude sessions
   const fetchSessions = useCallback(async () => {
     try {
       const data = await invoke<ClaudeSession[]>("get_claude_sessions");
       setSessions(data);
-    } catch (e) {
-      console.error("Failed to get claude sessions:", e);
+    } catch {
+      setSessions([]);
     }
   }, []);
 
@@ -60,8 +67,17 @@ export function DevToolsPanel() {
     }
   };
 
+  const buildResumeCommand = (session: ClaudeSession) => {
+    let cmd = session.resume_command;
+    if (skipPermissions) {
+      cmd += " --dangerously-skip-permissions";
+    }
+    return cmd;
+  };
+
   const handleCopyResume = async (session: ClaudeSession) => {
-    await writeText(session.resume_command);
+    const cmd = buildResumeCommand(session);
+    await writeText(cmd);
     setCopiedId(session.session_id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -99,17 +115,25 @@ export function DevToolsPanel() {
               {t("wslMemory")}
             </h3>
           </div>
-          <button
-            onClick={handleRestart}
-            disabled={restarting}
-            className="flex items-center gap-1.5 rounded-md bg-[var(--color-bg-tertiary)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
-          >
-            <RotateCcw size={11} className={restarting ? "animate-spin" : ""} />
-            {restarting ? t("restarting") : t("restartWsl")}
-          </button>
+          {wslAvailable && (
+            <button
+              onClick={handleRestart}
+              disabled={restarting}
+              className="flex items-center gap-1.5 rounded-md bg-[var(--color-bg-tertiary)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
+            >
+              <RotateCcw size={11} className={restarting ? "animate-spin" : ""} />
+              {restarting ? t("restarting") : t("restartWsl")}
+            </button>
+          )}
         </div>
 
-        {stats && (
+        {wslAvailable === false ? (
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3">
+            <p className="text-center text-xs text-[var(--color-text-secondary)]">
+              {t("wslNotDetected")}
+            </p>
+          </div>
+        ) : stats ? (
           <div
             className={`rounded-lg border p-3 ${statusBg(stats.status)}`}
           >
@@ -155,19 +179,44 @@ export function DevToolsPanel() {
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Claude Sessions Section */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Terminal size={14} className="text-[var(--color-text-secondary)]" />
-          <h3 className="text-xs font-semibold text-[var(--color-text-primary)]">
-            {t("claudeSessions")}
-          </h3>
-          <span className="text-[10px] text-[var(--color-text-secondary)]">
-            ({sessions.length})
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Terminal size={14} className="text-[var(--color-text-secondary)]" />
+            <h3 className="text-xs font-semibold text-[var(--color-text-primary)]">
+              {t("claudeSessions")}
+            </h3>
+            <span className="text-[10px] text-[var(--color-text-secondary)]">
+              ({sessions.length})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Skip permissions toggle */}
+            <button
+              onClick={() => setSkipPermissions(!skipPermissions)}
+              className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+                skipPermissions
+                  ? "bg-orange-500/15 text-orange-400 hover:bg-orange-500/25"
+                  : "bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
+              }`}
+              title={skipPermissions ? "--dangerously-skip-permissions ON" : "--dangerously-skip-permissions OFF"}
+            >
+              {skipPermissions ? <ShieldOff size={10} /> : <Shield size={10} />}
+              {t("skipPermissions")}
+            </button>
+            {/* Refresh button */}
+            <button
+              onClick={fetchSessions}
+              className="flex items-center gap-1 rounded-md bg-[var(--color-bg-tertiary)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+            >
+              <RefreshCw size={10} />
+              {t("refreshSessions")}
+            </button>
+          </div>
         </div>
 
         {sessions.length === 0 ? (
@@ -209,7 +258,7 @@ export function DevToolsPanel() {
                   <button
                     onClick={() => handleCopyResume(session)}
                     className="flex shrink-0 items-center gap-1 rounded-md bg-[var(--color-bg-tertiary)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-accent)] hover:text-white"
-                    title={session.resume_command}
+                    title={buildResumeCommand(session)}
                   >
                     {copiedId === session.session_id ? (
                       <>

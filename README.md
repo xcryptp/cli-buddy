@@ -5,125 +5,208 @@
 <h1 align="center">CLI Buddy</h1>
 
 <p align="center">
-  Windows 클립보드를 자동으로 감지·저장·관리하는 데스크톱 앱
+  <strong>Clipboard manager + WSL2 monitor + Claude Code session manager for Windows developers</strong>
   <br />
-  Auto-detect, save, and manage your clipboard (images & text) from your desktop.
+  <em>Windows 개발자를 위한 클립보드 매니저 + WSL2 모니터 + Claude Code 세션 관리 도구</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square&v=2" alt="Latest Release" />
+    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square&v=3" alt="Latest Release" />
   </a>
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square&v=2" alt="Downloads" />
+    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square&v=3" alt="Downloads" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square&v=2" alt="License" />
+    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square&v=3" alt="License" />
   </a>
 </p>
 
 <p align="center">
-  <a href="#download--다운로드">Download</a> •
-  <a href="#features--주요-기능">Features</a> •
-  <a href="#usage--사용법">Usage</a> •
-  <a href="#settings--설정">Settings</a> •
-  <a href="#build-from-source--소스에서-빌드">Build</a> •
-  <a href="#license">License</a>
+  <a href="#download">Download</a> •
+  <a href="#features">Features</a> •
+  <a href="#wsl2-devtools">WSL2 DevTools</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#changelog">Changelog</a> •
+  <a href="#build-from-source">Build</a>
 </p>
 
 ---
 
-## Download / 다운로드
+## The Problem / 이런 문제를 해결합니다
 
-**[Latest Release](https://github.com/xcryptp/cli-buddy/releases/latest)** 에서 Windows 설치 파일을 다운로드하세요.
+**EN** — If you use WSL2 on Windows, you know the pain:
+- `Win+Shift+S` screenshots disappear when you copy something else
+- WSL2 silently eats all your RAM until your terminal crashes
+- Claude Code sessions are lost when WSL goes down, and finding the resume command is a hassle
+
+**KO** — Windows에서 WSL2를 쓰는 개발자라면 이런 불편함을 겪어봤을 겁니다:
+- `Win+Shift+S`로 캡처한 스크린샷이 다른 걸 복사하면 사라짐
+- WSL2가 조용히 RAM을 다 잡아먹다가 터미널이 갑자기 꺼짐
+- WSL이 죽으면 Claude Code 세션도 날아가고, resume 명령어 찾기가 귀찮음
+
+**CLI Buddy fixes all of this in one lightweight desktop app.**
+
+---
+
+## Download
+
+**[Latest Release](https://github.com/xcryptp/cli-buddy/releases/latest)**
 
 | File | Description |
 |------|-------------|
-| `CLI.Buddy_x.x.x_x64-setup.exe` | Windows 설치 프로그램 (NSIS) |
-| `CLI.Buddy_x.x.x_x64_en-US.msi` | Windows 설치 프로그램 (MSI) |
+| **`CLI.Buddy.exe`** | Portable — download and run directly / 포터블 — 다운받아서 바로 실행 |
+| `CLI.Buddy_x64-setup.exe` | Installer — auto-start, start menu / 설치형 — 자동시작, 시작메뉴 등록 |
 
-> 설치 후 시스템 트레이에서 실행됩니다.
-
----
-
-## Why CLI Buddy? / 왜 CLI Buddy?
-
-**EN** — Windows `Win+Shift+S` copies a screenshot to the clipboard, but it disappears the moment you copy something else. CLI Buddy watches your clipboard in the background, automatically saves every screenshot as a PNG file, and lets you copy the file path (Windows or WSL format) with a single click. It also tracks your text clipboard history so you never lose copied text again.
-
-**KO** — `Win+Shift+S`로 캡처하면 클립보드에만 남아서 다른 걸 복사하면 사라집니다. CLI Buddy는 백그라운드에서 클립보드를 감시하고, 스크린샷은 자동으로 PNG 파일로 저장하며, 텍스트 복사 기록도 함께 관리합니다. 저장된 파일의 경로(Windows/WSL 형식)를 원클릭으로 복사할 수 있어서, 터미널·마크다운·채팅에 경로를 붙여넣는 개발자에게 유용합니다.
+> Requires Windows 10/11 with WebView2 (pre-installed on modern Windows).
+> Auto-update check: the app notifies you when a new version is available.
 
 ---
 
-## Features / 주요 기능
+## Features
 
-### Screenshot / 스크린샷
-- **자동 캡처** — 클립보드 이미지를 감지해 PNG로 자동 저장
-- **중복 제거** — SHA-256 해싱으로 동일 스크린샷 중복 저장 방지
-- **갤러리 뷰** — 썸네일 그리드 + 풀사이즈 미리보기
-- **경로 복사** — Windows (`C:\...`) 또는 WSL (`/mnt/c/...`) 형식 원클릭 복사
-- **이미지 복사** — 스크린샷을 클립보드로 다시 복사
-- **자동 정리** — 최대 보관 수 초과 시 오래된 것부터 자동 삭제
+### Clipboard Manager / 클립보드 매니저
 
-### Text Clipboard / 텍스트 클립보드
-- **텍스트 기록** — 복사한 텍스트를 자동으로 기록 (최대 10KB/항목)
-- **히스토리 관리** — 텍스트 기록 검색, 재복사, 개별/전체 삭제
-- **필터** — 전체 / 이미지 / 텍스트 필터링
+| Feature | Description |
+|---------|-------------|
+| **Auto-save screenshots** | Detects clipboard images → saves as PNG automatically / 클립보드 이미지 감지 → PNG 자동 저장 |
+| **Text clipboard history** | Tracks every text you copy (up to 10KB/entry) / 복사한 텍스트 자동 기록 |
+| **Deduplicate** | SHA-256 hash prevents saving identical screenshots / SHA-256으로 동일 스크린샷 중복 방지 |
+| **Gallery view** | Thumbnail grid + full-size preview with zoom / 썸네일 그리드 + 원본 크기 확대 |
+| **One-click copy** | Copy file path in Windows (`C:\...`) or WSL (`/mnt/c/...`) format / 경로 원클릭 복사 |
+| **Expand text** | Click to expand long text entries / 긴 텍스트 클릭 시 전체 보기 |
+| **Filter** | All / Images / Text / DevTools tabs / 전체 / 이미지 / 텍스트 / DevTools 필터 |
+
+### WSL2 DevTools / WSL2 개발자 도구
+
+| Feature | Description |
+|---------|-------------|
+| **Real-time Vmmem monitoring** | Shows WSL2 memory usage in status bar (color-coded) / 상태바에 WSL2 메모리 실시간 표시 |
+| **Memory warning** | Green → Yellow (75%) → Red (90%) with progress bar / 단계별 경고 표시 |
+| **Claude Code sessions** | Lists all recent sessions with project name, time, message count / Claude 세션 목록 표시 |
+| **One-click resume** | Copy `claude --resume <id>` to clipboard / 이어하기 명령어 원클릭 복사 |
+| **WSL restart** | Restart WSL from tray menu or DevTools panel / 트레이 메뉴 또는 UI에서 WSL 재시작 |
 
 ### General / 일반
-- **시스템 트레이** — 백그라운드 실행, 좌클릭으로 표시, 우클릭 메뉴
-- **글로벌 단축키** — `Alt+Shift+V`로 어디서든 앱 표시 (설정 변경 가능)
-- **다국어 UI** — 한국어 / English 지원
-- **자동 시작** — Windows 부팅 시 자동 실행 (선택)
+
+| Feature | Description |
+|---------|-------------|
+| **System tray** | Runs in background, left-click to show, right-click for menu / 백그라운드 실행 |
+| **Global shortcut** | `Alt+Shift+V` to show app from anywhere (customizable, key recorder) / 글로벌 단축키 |
+| **Auto-update check** | Checks GitHub releases on startup, shows banner / 시작 시 업데이트 확인 |
+| **i18n** | Korean / English / 한국어·영어 지원 |
+| **Auto-start** | Optional launch on Windows boot / Windows 부팅 시 자동 실행 |
+| **Popup near cursor** | Global shortcut opens popup near mouse position / 마우스 커서 근처에 팝업 |
 
 ---
 
-## Usage / 사용법
+## WSL2 DevTools
+
+The killer feature for WSL2 users. CLI Buddy monitors the `Vmmem` process (WSL2's Hyper-V VM) and gives you real-time visibility into memory usage — something Windows doesn't provide natively.
+
+WSL2 사용자를 위한 핵심 기능. Windows가 기본 제공하지 않는 Vmmem 프로세스(WSL2 VM) 메모리를 실시간으로 보여줍니다.
+
+### Why this matters / 왜 필요한가
+
+WSL2 runs as a Hyper-V VM that **never returns memory to Windows** by default. When Node.js, Rust builds, or Docker consume memory inside WSL, the VM keeps growing until:
+
+1. Windows runs out of RAM → your terminal (Warp, Windows Terminal, etc.) crashes
+2. WSL2 kernel panics → `wsl --shutdown` is the only fix
+3. All running Claude Code sessions are lost
+
+CLI Buddy **warns you before it happens** and provides one-click WSL restart.
+
+WSL2는 기본적으로 **한번 잡은 메모리를 반환하지 않는** Hyper-V VM입니다. 메모리가 가득 차면 터미널이 크래시되고, WSL이 먹통이 되며, Claude Code 세션이 날아갑니다. CLI Buddy는 **터지기 전에 경고**해주고 원클릭 재시작을 제공합니다.
+
+### Claude Code Session Recovery / Claude 세션 복구
+
+When WSL crashes, your Claude Code sessions aren't actually lost — they're saved in `~/.claude/projects/`. CLI Buddy reads these session files and shows them in a clean list with one-click resume.
+
+WSL이 크래시되어도 Claude Code 세션은 `~/.claude/projects/`에 저장되어 있습니다. CLI Buddy가 세션 파일을 읽어서 목록으로 보여주고, 원클릭으로 이어하기 명령어를 복사해줍니다.
+
+```bash
+# What you'd normally have to do manually:
+# 보통은 이렇게 수동으로 해야 하지만:
+claude --resume 680a1b99-ec61-44ca-8019-775f099d5165
+
+# CLI Buddy: just click "Resume" → command copied to clipboard
+# CLI Buddy에서는: "이어하기" 클릭 → 명령어가 클립보드에 복사
+```
+
+---
+
+## Usage
 
 ### Quick Start / 빠른 시작
 
-1. **설치 & 실행** — 설치 파일 실행 → 시스템 트레이에 아이콘 표시
-2. **스크린샷 캡처** — `Win+Shift+S`로 화면 캡처 → 자동 저장
-3. **텍스트 복사** — 아무 텍스트 복사 → 자동 기록
-4. **경로/텍스트 복사** — 갤러리에서 클릭 한 번으로 복사
-5. **빠른 접근** — `Alt+Shift+V`로 어디서든 앱 표시
-
-### Path Formats / 경로 형식
-
-```
-Windows:  C:\Users\you\Pictures\CLIBuddy\screenshot_2026-02-12_14-30-45.png
-WSL:      /mnt/c/Users/you/Pictures/CLIBuddy/screenshot_2026-02-12_14-30-45.png
-```
+1. **Download & Run** — Download `CLI.Buddy.exe` → double-click to run
+2. **Capture** — `Win+Shift+S` to screenshot → automatically saved
+3. **Copy text** — Copy any text → automatically recorded
+4. **Browse** — Open gallery to view, copy paths, or manage history
+5. **Quick access** — `Alt+Shift+V` to show app from anywhere
+6. **Monitor WSL** — Check DevTools tab for memory status + Claude sessions
 
 ### System Tray / 시스템 트레이
 
-| Action | Result |
-|--------|--------|
-| 트레이 아이콘 좌클릭 | 윈도우 표시/포커스 |
-| **Monitor Start/Stop** | 클립보드 감시 시작/중단 |
-| **Open Folder** | 스크린샷 저장 폴더 열기 |
-| **Show Window** | 앱 창 표시 |
-| **Quit** | 앱 종료 |
+| Menu | Action |
+|------|--------|
+| **Monitor Start/Stop** | Toggle clipboard monitoring / 클립보드 감시 시작/중단 |
+| **Open Folder** | Open screenshot save directory / 저장 폴더 열기 |
+| **Restart WSL** | Shutdown and restart WSL / WSL 재시작 |
+| **Show Window** | Show main window / 앱 창 표시 |
+| **Quit** | Exit application / 앱 종료 |
 
----
-
-## Settings / 설정
+### Settings / 설정
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Save Directory | `Pictures/CLIBuddy` | 스크린샷 저장 경로 |
-| Polling Interval | `500ms` | 클립보드 확인 간격 (200–5000ms) |
-| Max Screenshots | `100` | 최대 스크린샷 보관 수 |
-| Auto Copy Path | `ON` | 캡처 시 파일 경로 자동 복사 |
-| Auto Start | `OFF` | Windows 시작 시 자동 실행 |
-| Language | `한국어` | 한국어 / English |
-| Path Format | `Windows` | Windows / WSL |
-| Capture Text | `ON` | 텍스트 클립보드 자동 저장 |
-| Max Text Entries | `50` | 최대 텍스트 기록 수 |
-| Global Shortcut | `Alt+Shift+V` | 앱 표시 단축키 |
+| Save Directory | `Pictures/CLIBuddy` | Screenshot save path / 저장 경로 |
+| Polling Interval | `500ms` | Clipboard check interval / 확인 간격 |
+| Max Screenshots | `100` | Max stored screenshots / 최대 보관 수 |
+| Max Text Entries | `50` | Max text history entries / 최대 텍스트 수 |
+| Global Shortcut | `Alt+Shift+V` | Key combo recorder / 키 조합 녹화 방식 |
+| Auto Copy Path | `ON` | Auto-copy path on capture / 자동 경로 복사 |
+| Capture Text | `ON` | Save text clipboard / 텍스트 자동 저장 |
+| Auto Start | `OFF` | Launch on Windows boot / 자동 시작 |
+| Language | `한국어` | Korean / English |
+| Path Format | `Windows` | Windows / WSL path format |
 
 ---
 
-## Tech Stack / 기술 스택
+## Changelog
+
+### v0.1.1
+
+**DevTools, WSL Monitoring & UX Improvements**
+
+- **NEW**: WSL2 Vmmem memory monitoring (status bar + DevTools panel)
+- **NEW**: Claude Code session list with one-click resume
+- **NEW**: WSL restart from tray menu and DevTools
+- **NEW**: Auto-update check with banner notification
+- **FIX**: Duplicate tray icon bug
+- **FIX**: Small taskbar icon (ICO now includes 7 sizes)
+- **FIX**: Popup opens near mouse cursor instead of screen center
+- **IMPROVE**: Global shortcut key recorder (press combo to set)
+- **IMPROVE**: Status bar shows screenshot + text + WSL memory
+- **IMPROVE**: Click to expand long text entries
+- **IMPROVE**: Click image to toggle original size
+
+### v0.1.0
+
+**Initial Release**
+
+- Clipboard image auto-detect and save (SHA-256 dedup)
+- Text clipboard history
+- Gallery view with filters
+- Windows/WSL path copy
+- System tray + global shortcut (`Alt+Shift+V`)
+- Bilingual UI (Korean/English)
+- Custom app icon
+- GitHub Actions release pipeline
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -137,26 +220,24 @@ WSL:      /mnt/c/Users/you/Pictures/CLIBuddy/screenshot_2026-02-12_14-30-45.png
 
 ---
 
-## Build from Source / 소스에서 빌드
+## Build from Source
 
-**Prerequisites / 필수 조건:**
+**Prerequisites:**
 - [Node.js](https://nodejs.org/) ≥ 18
 - [Rust](https://rustup.rs/) ≥ 1.77
-- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Windows C++ workload)
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload)
 
 ```bash
 git clone https://github.com/xcryptp/cli-buddy.git
 cd cli-buddy
 npm install
-npm run tauri dev       # 개발 모드 (핫 리로드)
-npm run tauri build     # 프로덕션 빌드
+npm run tauri dev       # Development (hot reload)
+npm run tauri build     # Production build
 ```
-
-Build output: `src-tauri/target/release/bundle/`
 
 ---
 
-## Contributing / 기여
+## Contributing
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
 

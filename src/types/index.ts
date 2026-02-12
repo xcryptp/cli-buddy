@@ -103,6 +103,10 @@ export const translations = {
     resume: "이어하기",
     copied: "복사됨",
     messages: "메시지",
+    skipPermissions: "권한 스킵",
+    wslNotDetected: "WSL이 감지되지 않음",
+    wslNotRunning: "WSL이 실행 중이 아닙니다",
+    refreshSessions: "새로고침",
   },
   en: {
     appName: "CLI Buddy",
@@ -152,6 +156,10 @@ export const translations = {
     resume: "Resume",
     copied: "Copied",
     messages: "messages",
+    skipPermissions: "Skip Permissions",
+    wslNotDetected: "WSL not detected",
+    wslNotRunning: "WSL is not running",
+    refreshSessions: "Refresh",
   },
 } as const;
 
