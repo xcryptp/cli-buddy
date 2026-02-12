@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { Activity, ActivitySquare, Settings } from "lucide-react";
 import { open } from "@tauri-apps/plugin-shell";
 import { useMonitorStatus } from "../hooks/useMonitorStatus";
 import { useScreenshotStore } from "../stores/screenshotStore";
+import type { VmmemStats } from "../types";
 
 interface StatusBarProps {
   onSettingsClick: () => void;
@@ -12,6 +15,28 @@ export function StatusBar({ onSettingsClick }: StatusBarProps) {
   const screenshotCount = useScreenshotStore((s) => s.screenshots.length);
   const textCount = useScreenshotStore((s) => s.textEntries.length);
   const t = useScreenshotStore((s) => s.t);
+  const [vmmem, setVmmem] = useState<VmmemStats | null>(null);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const stats = await invoke<VmmemStats>("get_vmmem_stats");
+        setVmmem(stats);
+      } catch {
+        // Silently fail
+      }
+    };
+    fetch();
+    const interval = setInterval(fetch, 10000); // every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  const memColor =
+    vmmem?.status === "danger"
+      ? "text-red-400"
+      : vmmem?.status === "warning"
+        ? "text-yellow-400"
+        : "text-green-400";
 
   return (
     <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5">
@@ -22,6 +47,11 @@ export function StatusBar({ onSettingsClick }: StatusBarProps) {
         <span className="text-xs text-[var(--color-text-secondary)]">
           {screenshotCount} {t("screenshots")} · {textCount} {t("textEntries")}
         </span>
+        {vmmem && (
+          <span className={`text-xs font-medium ${memColor}`}>
+            WSL {(vmmem.used_mb / 1024).toFixed(1)}/{(vmmem.limit_mb / 1024).toFixed(0)}GB
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">

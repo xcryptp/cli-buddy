@@ -8,21 +8,21 @@ use tauri::{
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let toggle_monitor = MenuItemBuilder::with_id("toggle_monitor", "Monitor: Start").build(app)?;
     let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder").build(app)?;
+    let restart_wsl = MenuItemBuilder::with_id("restart_wsl", "Restart WSL").build(app)?;
     let show_window = MenuItemBuilder::with_id("show_window", "Show Window").build(app)?;
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
 
     let menu = MenuBuilder::new(app)
-        .items(&[&toggle_monitor, &open_folder, &show_window, &quit])
+        .items(&[&toggle_monitor, &open_folder, &restart_wsl, &show_window, &quit])
         .build()?;
 
+    let png_data = include_bytes!("../../icons/32x32.png");
+    let img = image::load_from_memory(png_data).unwrap().to_rgba8();
+    let (w, h) = img.dimensions();
+    let icon = tauri::image::Image::new_owned(img.into_raw(), w, h);
+
     TrayIconBuilder::new()
-        .icon(tauri::image::Image::from_path("icons/icon.png").unwrap_or_else(|_| {
-            // Fallback: use raw RGBA from included PNG via image crate
-            let png_data = include_bytes!("../../icons/32x32.png");
-            let img = image::load_from_memory(png_data).unwrap().to_rgba8();
-            let (w, h) = img.dimensions();
-            tauri::image::Image::new_owned(img.into_raw(), w, h)
-        }))
+        .icon(icon)
         .menu(&menu)
         .tooltip("CLI Buddy")
         .on_menu_event(move |app, event| match event.id().as_ref() {
@@ -39,6 +39,12 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 let settings = state.settings.lock().unwrap();
                 let dir = settings.save_directory.clone();
                 let _ = open::that(&dir);
+            }
+            "restart_wsl" => {
+                let _ = std::process::Command::new("wsl.exe")
+                    .args(["--shutdown"])
+                    .spawn();
+                // WSL will auto-restart on next access
             }
             "show_window" => {
                 if let Some(window) = app.get_webview_window("main") {

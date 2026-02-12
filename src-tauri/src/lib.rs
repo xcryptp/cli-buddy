@@ -5,7 +5,7 @@ mod state;
 mod storage;
 mod tray;
 
-use commands::{clipboard, history, monitor as monitor_cmd, screenshot, settings};
+use commands::{clipboard, history, monitor as monitor_cmd, screenshot, settings, system};
 use state::AppState;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
@@ -115,6 +115,9 @@ pub fn run() {
             history::delete_text_entry,
             history::clear_text_history,
             history::paste_from_history,
+            system::get_vmmem_stats,
+            system::get_claude_sessions,
+            system::restart_wsl,
         ])
         .setup(|app| {
             // Setup system tray

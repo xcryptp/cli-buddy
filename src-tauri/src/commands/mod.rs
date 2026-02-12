@@ -3,3 +3,4 @@ pub mod history;
 pub mod monitor;
 pub mod screenshot;
 pub mod settings;
+pub mod system;

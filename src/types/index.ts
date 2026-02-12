@@ -19,7 +19,24 @@ export type ClipboardEntry =
   | { type: "image"; data: ScreenshotInfo }
   | { type: "text"; data: TextEntry };
 
-export type FilterMode = "all" | "images" | "text";
+export type FilterMode = "all" | "images" | "text" | "devtools";
+
+export interface VmmemStats {
+  used_mb: number;
+  limit_mb: number;
+  usage_percent: number;
+  status: "normal" | "warning" | "danger";
+}
+
+export interface ClaudeSession {
+  session_id: string;
+  project: string;
+  project_path: string;
+  last_modified: string;
+  message_count: number;
+  size_kb: number;
+  resume_command: string;
+}
 
 export interface AppSettings {
   save_directory: string;
@@ -75,6 +92,17 @@ export const translations = {
     chars: "자",
     textEntries: "개의 텍스트",
     noItems: "항목이 없습니다",
+    devtools: "DevTools",
+    wslMemory: "WSL 메모리",
+    restartWsl: "WSL 재시작",
+    restartWslConfirm: "WSL을 재시작하면 실행 중인 모든 WSL 프로세스가 종료됩니다. 계속하시겠습니까?",
+    restarting: "재시작 중...",
+    restarted: "WSL 재시작 완료",
+    claudeSessions: "Claude 세션",
+    noSessions: "세션이 없습니다",
+    resume: "이어하기",
+    copied: "복사됨",
+    messages: "메시지",
   },
   en: {
     appName: "CLI Buddy",
@@ -113,6 +141,17 @@ export const translations = {
     chars: "chars",
     textEntries: "texts",
     noItems: "No items",
+    devtools: "DevTools",
+    wslMemory: "WSL Memory",
+    restartWsl: "Restart WSL",
+    restartWslConfirm: "Restarting WSL will terminate all running WSL processes. Continue?",
+    restarting: "Restarting...",
+    restarted: "WSL restarted",
+    claudeSessions: "Claude Sessions",
+    noSessions: "No sessions found",
+    resume: "Resume",
+    copied: "Copied",
+    messages: "messages",
   },
 } as const;
 
