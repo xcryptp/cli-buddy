@@ -31,7 +31,6 @@
     "dialog:allow-message",
     "dialog:allow-ask",
     "shell:allow-open",
-    "opener:default",
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
