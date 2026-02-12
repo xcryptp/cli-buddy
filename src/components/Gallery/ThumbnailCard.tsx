@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { ClipboardCopy, Image, Trash2 } from "lucide-react";
+import { ClipboardCopy, Image, Trash2, ZoomIn } from "lucide-react";
 import { format } from "date-fns";
 import { CopyButton } from "../common/CopyButton";
 import { useScreenshotStore } from "../../stores/screenshotStore";
@@ -50,7 +50,7 @@ export function ThumbnailCard({ screenshot }: ThumbnailCardProps) {
     <div className="group relative overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] transition-colors hover:border-[var(--color-accent)]/30">
       <button
         onClick={handlePreview}
-        className="block w-full cursor-pointer border-none bg-transparent p-0"
+        className="relative block w-full cursor-pointer border-none bg-transparent p-0"
       >
         <div className="aspect-video w-full overflow-hidden bg-[var(--color-bg-tertiary)]">
           <img
@@ -59,6 +59,13 @@ export function ThumbnailCard({ screenshot }: ThumbnailCardProps) {
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
             draggable={false}
           />
+        </div>
+        {/* Hover overlay */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-all group-hover:bg-black/30">
+          <div className="flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <ZoomIn size={12} className="text-white" />
+            <span className="text-[10px] font-medium text-white">{t("viewOriginal")}</span>
+          </div>
         </div>
       </button>
 

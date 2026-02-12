@@ -36,6 +36,7 @@ export interface ClaudeSession {
   message_count: number;
   size_kb: number;
   resume_command: string;
+  topic: string;
 }
 
 export interface AppSettings {
@@ -107,6 +108,9 @@ export const translations = {
     wslNotDetected: "WSL이 감지되지 않음",
     wslNotRunning: "WSL이 실행 중이 아닙니다",
     refreshSessions: "새로고침",
+    viewOriginal: "원본 보기",
+    expandText: "펼치기",
+    collapseText: "접기",
   },
   en: {
     appName: "CLI Buddy",
@@ -160,6 +164,9 @@ export const translations = {
     wslNotDetected: "WSL not detected",
     wslNotRunning: "WSL is not running",
     refreshSessions: "Refresh",
+    viewOriginal: "View Original",
+    expandText: "Expand",
+    collapseText: "Collapse",
   },
 } as const;
 

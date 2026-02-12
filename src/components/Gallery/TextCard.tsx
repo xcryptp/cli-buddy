@@ -36,7 +36,7 @@ export function TextCard({ entry }: TextCardProps) {
   return (
     <div className="group rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 transition-colors hover:border-[var(--color-accent)]/30">
       <div
-        className={isLong ? "cursor-pointer" : ""}
+        className={isLong ? "cursor-pointer rounded-md transition-colors hover:bg-[var(--color-bg-tertiary)]" : ""}
         onClick={() => isLong && setExpanded(!expanded)}
       >
         <pre
@@ -58,15 +58,17 @@ export function TextCard({ entry }: TextCardProps) {
           {isLong && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-0.5 text-[10px] text-[var(--color-accent)] hover:underline"
+              className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent)]/10"
             >
               {expanded ? (
                 <>
                   <ChevronUp size={10} />
+                  {t("collapseText")}
                 </>
               ) : (
                 <>
                   <ChevronDown size={10} />
+                  {t("expandText")}
                 </>
               )}
             </button>

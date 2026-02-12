@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::io::BufRead;
 use std::process::Command;
 
 #[cfg(target_os = "windows")]
@@ -24,6 +25,7 @@ pub struct ClaudeSession {
     pub message_count: u32,
     pub size_kb: u64,
     pub resume_command: String,
+    pub topic: String,
 }
 
 fn new_hidden_command(program: &str) -> Command {
@@ -35,12 +37,12 @@ fn new_hidden_command(program: &str) -> Command {
 
 #[tauri::command]
 pub fn get_vmmem_stats() -> Result<VmmemStats, String> {
-    // Get Vmmem process memory via PowerShell
+    // Process name can be "vmmem" or "vmmemWSL" depending on Windows version
     let output = new_hidden_command("powershell.exe")
         .args([
             "-NoProfile",
             "-Command",
-            "(Get-Process -Name vmmem -ErrorAction SilentlyContinue | Measure-Object -Property WorkingSet64 -Sum).Sum",
+            "(Get-Process -Name vmmem* -ErrorAction SilentlyContinue | Measure-Object -Property WorkingSet64 -Sum).Sum",
         ])
         .output()
         .map_err(|e| format!("Failed to run PowerShell: {}", e))?;
@@ -51,8 +53,7 @@ pub fn get_vmmem_stats() -> Result<VmmemStats, String> {
         .unwrap_or(0);
     let used_mb = used_bytes / 1024 / 1024;
 
-    // Read .wslconfig for memory limit
-    let limit_mb = get_wsl_memory_limit().unwrap_or(16384); // default 16GB
+    let limit_mb = get_wsl_memory_limit().unwrap_or(16384);
 
     let usage_percent = if limit_mb > 0 {
         (used_mb as f64 / limit_mb as f64) * 100.0
@@ -85,7 +86,6 @@ fn get_wsl_memory_limit() -> Option<u64> {
         let line = line.trim().to_lowercase();
         if line.starts_with("memory=") || line.starts_with("memory =") {
             let val = line.split('=').nth(1)?.trim().to_string();
-            // Parse "16GB", "8GB", "4096MB" etc
             if let Some(gb) = val.strip_suffix("gb") {
                 return gb.trim().parse::<u64>().ok().map(|g| g * 1024);
             }
@@ -99,127 +99,169 @@ fn get_wsl_memory_limit() -> Option<u64> {
 
 #[tauri::command]
 pub fn get_claude_sessions() -> Result<Vec<ClaudeSession>, String> {
-    let wsl_home = get_wsl_home_path()?;
-    let claude_dir = format!("{}/.claude/projects", wsl_home);
-
     let mut sessions = Vec::new();
 
-    let projects_dir = std::path::Path::new(&claude_dir);
-    if !projects_dir.exists() {
-        return Ok(sessions);
+    // Try multiple paths to find Claude sessions
+    let mut search_paths: Vec<std::path::PathBuf> = Vec::new();
+
+    // 1. Windows native: %USERPROFILE%\.claude\projects
+    if let Ok(userprofile) = std::env::var("USERPROFILE") {
+        let win_path = std::path::PathBuf::from(&userprofile)
+            .join(".claude")
+            .join("projects");
+        if win_path.exists() {
+            search_paths.push(win_path);
+        }
     }
 
-    for project_entry in std::fs::read_dir(projects_dir).map_err(|e| e.to_string())? {
-        let project_entry = project_entry.map_err(|e| e.to_string())?;
-        if !project_entry.file_type().map_err(|e| e.to_string())?.is_dir() {
-            continue;
+    // 2. WSL: use wslpath to get the correct Windows-accessible path
+    if let Ok(wsl_path) = get_wsl_claude_path() {
+        let path = std::path::PathBuf::from(&wsl_path);
+        if path.exists() && !search_paths.contains(&path) {
+            search_paths.push(path);
         }
+    }
 
-        let project_dir_name = project_entry.file_name().to_string_lossy().to_string();
+    for projects_dir in &search_paths {
+        if let Ok(entries) = std::fs::read_dir(projects_dir) {
+            for project_entry in entries.flatten() {
+                if !project_entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                    continue;
+                }
 
-        // Decode project path from directory name (e.g., "-home-hyunsu-Dev-cli-buddy" -> "/home/hyunsu/Dev/cli-buddy")
-        let project_path = project_dir_name.replace('-', "/");
-        let project_name = project_dir_name
-            .rsplit('-')
-            .next()
-            .unwrap_or(&project_dir_name)
-            .to_string();
+                let project_dir_name = project_entry.file_name().to_string_lossy().to_string();
+                let project_path = project_dir_name.replace('-', "/");
+                let project_name = project_dir_name
+                    .rsplit('-')
+                    .next()
+                    .unwrap_or(&project_dir_name)
+                    .to_string();
 
-        // Find .jsonl session files
-        let project_path_full = project_entry.path();
-        let entries = match std::fs::read_dir(&project_path_full) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
+                let project_path_full = project_entry.path();
+                let file_entries = match std::fs::read_dir(&project_path_full) {
+                    Ok(e) => e,
+                    Err(_) => continue,
+                };
 
-        for file_entry in entries {
-            let file_entry = match file_entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-            let filename = file_entry.file_name().to_string_lossy().to_string();
+                for file_entry in file_entries.flatten() {
+                    let filename = file_entry.file_name().to_string_lossy().to_string();
+                    if !filename.ends_with(".jsonl") {
+                        continue;
+                    }
 
-            if !filename.ends_with(".jsonl") {
-                continue;
+                    let session_id = filename.trim_end_matches(".jsonl").to_string();
+                    let metadata = match file_entry.metadata() {
+                        Ok(m) => m,
+                        Err(_) => continue,
+                    };
+                    let size_kb = metadata.len() / 1024;
+
+                    let last_modified = metadata
+                        .modified()
+                        .ok()
+                        .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+                        .and_then(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
+                        .map(|dt| dt.format("%m/%d %H:%M").to_string())
+                        .unwrap_or_default();
+
+                    // Count lines and extract topic from first user message
+                    let (message_count, topic) = extract_session_info(&file_entry.path());
+
+                    let resume_command = format!("claude --resume {}", session_id);
+
+                    sessions.push(ClaudeSession {
+                        session_id,
+                        project: project_name.clone(),
+                        project_path: project_path.clone(),
+                        last_modified,
+                        message_count,
+                        size_kb,
+                        resume_command,
+                        topic,
+                    });
+                }
             }
-
-            let session_id = filename.trim_end_matches(".jsonl").to_string();
-            let metadata = match file_entry.metadata() {
-                Ok(m) => m,
-                Err(_) => continue,
-            };
-            let size_kb = metadata.len() / 1024;
-
-            // Get last modified time
-            let last_modified = metadata
-                .modified()
-                .ok()
-                .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
-                .and_then(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
-                .map(|dt| dt.format("%m/%d %H:%M").to_string())
-                .unwrap_or_default();
-
-            // Count messages (quick: count lines)
-            let message_count = std::fs::read_to_string(file_entry.path())
-                .map(|content| content.lines().count() as u32)
-                .unwrap_or(0);
-
-            let resume_command = format!("claude --resume {}", session_id);
-
-            sessions.push(ClaudeSession {
-                session_id,
-                project: project_name.clone(),
-                project_path: project_path.clone(),
-                last_modified,
-                message_count,
-                size_kb,
-                resume_command,
-            });
         }
     }
 
     // Sort by last modified (newest first)
     sessions.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
-
-    // Limit to 20 most recent
     sessions.truncate(20);
 
     Ok(sessions)
 }
 
-fn get_wsl_home_path() -> Result<String, String> {
+/// Extract line count and first user message topic from a .jsonl session file
+fn extract_session_info(path: &std::path::Path) -> (u32, String) {
+    let file = match std::fs::File::open(path) {
+        Ok(f) => f,
+        Err(_) => return (0, String::new()),
+    };
+    let reader = std::io::BufReader::new(file);
+    let mut count = 0u32;
+    let mut topic = String::new();
+
+    for line in reader.lines() {
+        let line = match line {
+            Ok(l) => l,
+            Err(_) => break,
+        };
+        count += 1;
+
+        // Only look for topic in first 20 lines to keep it fast
+        if topic.is_empty() && count <= 20 {
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
+                // Claude Code session format: {"type":"human","message":{"content":"..."}}
+                let msg_type = val.get("type").and_then(|t| t.as_str()).unwrap_or("");
+                if msg_type == "human" {
+                    // Try nested message.content (array or string)
+                    if let Some(msg) = val.get("message") {
+                        if let Some(content) = msg.get("content") {
+                            if let Some(s) = content.as_str() {
+                                topic = s.chars().take(80).collect();
+                            } else if let Some(arr) = content.as_array() {
+                                // content can be [{type:"text", text:"..."}]
+                                for item in arr {
+                                    if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
+                                        topic = text.chars().take(80).collect();
+                                        break;
+                                    }
+                                }
+                            }
+                        } else if let Some(s) = msg.as_str() {
+                            topic = s.chars().take(80).collect();
+                        }
+                    }
+                    // Also try flat "content" field
+                    if topic.is_empty() {
+                        if let Some(content) = val.get("content") {
+                            if let Some(s) = content.as_str() {
+                                topic = s.chars().take(80).collect();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    (count, topic)
+}
+
+/// Use wslpath to get the Windows-accessible path to Claude projects in WSL
+fn get_wsl_claude_path() -> Result<String, String> {
+    // wslpath auto-resolves the correct distro name (Ubuntu, Ubuntu-24.04, Debian, etc.)
     let output = new_hidden_command("wsl.exe")
-        .args(["-e", "echo", "$HOME"])
+        .args(["-e", "sh", "-c", "wslpath -w \"$HOME/.claude/projects\""])
         .output()
         .map_err(|e| format!("Failed to run wsl: {}", e))?;
 
-    let wsl_home = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
-    if wsl_home.is_empty() {
-        return Err("Could not determine WSL home directory".to_string());
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if path.is_empty() || !output.status.success() {
+        return Err("Could not get WSL Claude path".to_string());
     }
 
-    let distro = get_default_wsl_distro().unwrap_or("Ubuntu".to_string());
-    let windows_path = format!("\\\\wsl.localhost\\{}{}",
-        distro,
-        wsl_home.replace('/', "\\")
-    );
-
-    Ok(windows_path)
-}
-
-fn get_default_wsl_distro() -> Option<String> {
-    let output = new_hidden_command("wsl.exe")
-        .args(["--list", "--quiet"])
-        .output()
-        .ok()?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    stdout
-        .lines()
-        .next()
-        .map(|s| s.replace('\0', "").trim().to_string())
-        .filter(|s| !s.is_empty())
+    Ok(path)
 }
 
 #[tauri::command]

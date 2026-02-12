@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import {
@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Shield,
   ShieldOff,
+  Loader2,
 } from "lucide-react";
 import { useScreenshotStore } from "../../stores/screenshotStore";
 import type { VmmemStats, ClaudeSession } from "../../types";
@@ -24,6 +25,9 @@ export function DevToolsPanel() {
   const [restarting, setRestarting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [skipPermissions, setSkipPermissions] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const initializedRef = useRef(false);
 
   // Fetch Vmmem stats
   const fetchStats = useCallback(async () => {
@@ -33,26 +37,38 @@ export function DevToolsPanel() {
       setWslAvailable(true);
     } catch {
       setStats(null);
-      if (wslAvailable === null) setWslAvailable(false);
+      setWslAvailable((prev) => (prev === null ? false : prev));
+    } finally {
+      setLoadingStats(false);
     }
-  }, [wslAvailable]);
+  }, []);
 
   // Fetch Claude sessions
   const fetchSessions = useCallback(async () => {
+    setLoadingSessions(true);
     try {
       const data = await invoke<ClaudeSession[]>("get_claude_sessions");
       setSessions(data);
     } catch {
       setSessions([]);
+    } finally {
+      setLoadingSessions(false);
     }
   }, []);
 
+  // Initial fetch - runs once
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     fetchStats();
     fetchSessions();
-    const interval = setInterval(fetchStats, 5000); // every 5s
-    return () => clearInterval(interval);
   }, [fetchStats, fetchSessions]);
+
+  // Polling for stats only
+  useEffect(() => {
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
 
   const handleRestart = async () => {
     if (!confirm(t("restartWslConfirm"))) return;
@@ -127,7 +143,14 @@ export function DevToolsPanel() {
           )}
         </div>
 
-        {wslAvailable === false ? (
+        {loadingStats ? (
+          <div className="flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4">
+            <Loader2 size={16} className="animate-spin text-[var(--color-text-secondary)]" />
+            <span className="ml-2 text-xs text-[var(--color-text-secondary)]">
+              {t("loading")}
+            </span>
+          </div>
+        ) : wslAvailable === false ? (
           <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3">
             <p className="text-center text-xs text-[var(--color-text-secondary)]">
               {t("wslNotDetected")}
@@ -190,9 +213,11 @@ export function DevToolsPanel() {
             <h3 className="text-xs font-semibold text-[var(--color-text-primary)]">
               {t("claudeSessions")}
             </h3>
-            <span className="text-[10px] text-[var(--color-text-secondary)]">
-              ({sessions.length})
-            </span>
+            {!loadingSessions && (
+              <span className="text-[10px] text-[var(--color-text-secondary)]">
+                ({sessions.length})
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Skip permissions toggle */}
@@ -211,15 +236,34 @@ export function DevToolsPanel() {
             {/* Refresh button */}
             <button
               onClick={fetchSessions}
-              className="flex items-center gap-1 rounded-md bg-[var(--color-bg-tertiary)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+              disabled={loadingSessions}
+              className="flex items-center gap-1 rounded-md bg-[var(--color-bg-tertiary)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
             >
-              <RefreshCw size={10} />
+              <RefreshCw size={10} className={loadingSessions ? "animate-spin" : ""} />
               {t("refreshSessions")}
             </button>
           </div>
         </div>
 
-        {sessions.length === 0 ? (
+        {loadingSessions ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-2.5"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-24 rounded bg-[var(--color-bg-tertiary)]" />
+                    <div className="h-2 w-48 rounded bg-[var(--color-bg-tertiary)]" />
+                    <div className="h-2 w-32 rounded bg-[var(--color-bg-tertiary)]" />
+                  </div>
+                  <div className="h-6 w-16 rounded bg-[var(--color-bg-tertiary)]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
           <p className="py-4 text-center text-xs text-[var(--color-text-secondary)]">
             {t("noSessions")}
           </p>
@@ -243,6 +287,11 @@ export function DevToolsPanel() {
                     <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-secondary)]">
                       {session.project_path}
                     </p>
+                    {session.topic && (
+                      <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-primary)]/70">
+                        {session.topic}
+                      </p>
+                    )}
                     <div className="mt-1 flex items-center gap-3">
                       <span className="text-[10px] text-[var(--color-text-secondary)]">
                         {session.message_count.toLocaleString()} {t("messages")}

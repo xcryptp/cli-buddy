@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { X, ClipboardCopy, Image, Trash2, Maximize2, Minimize2 } from "lucide-react";
+import { X, ClipboardCopy, Image, Trash2, Maximize2, Minimize2, Loader2 } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { useScreenshotStore } from "../../stores/screenshotStore";
 import { CopyButton } from "../common/CopyButton";
-import { convertFileSrc } from "@tauri-apps/api/core";
 
 export function ImagePreview() {
   const { selectedImage, setSelectedImage, copyPath, copyImage, deleteScreenshot } =
     useScreenshotStore();
   const [fullSize, setFullSize] = useState(false);
+  const [fullImageSrc, setFullImageSrc] = useState<string | null>(null);
+  const [loadingFull, setLoadingFull] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleClose = useCallback(() => {
     setSelectedImage(null);
     setFullSize(false);
+    setFullImageSrc(null);
+    setImageError(false);
   }, [setSelectedImage]);
 
   const handleDelete = useCallback(async () => {
@@ -19,6 +24,21 @@ export function ImagePreview() {
     await deleteScreenshot(selectedImage.filename);
     setSelectedImage(null);
   }, [selectedImage, deleteScreenshot, setSelectedImage]);
+
+  // Load full image from backend
+  const loadFullImage = useCallback(async (path: string) => {
+    setLoadingFull(true);
+    setImageError(false);
+    try {
+      const dataUrl = await invoke<string>("get_image_base64", { path });
+      setFullImageSrc(dataUrl);
+    } catch (e) {
+      console.error("Failed to load full image:", e);
+      setImageError(true);
+    } finally {
+      setLoadingFull(false);
+    }
+  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -35,16 +55,19 @@ export function ImagePreview() {
     return () => window.removeEventListener("keydown", handler);
   }, [handleClose, fullSize]);
 
-  // Reset fullSize when image changes
+  // Load full image when preview opens
   useEffect(() => {
     setFullSize(false);
-  }, [selectedImage]);
+    setFullImageSrc(null);
+    setImageError(false);
+    if (selectedImage) {
+      loadFullImage(selectedImage.path);
+    }
+  }, [selectedImage, loadFullImage]);
 
   if (!selectedImage) return null;
 
-  const imageSrc = fullSize
-    ? convertFileSrc(selectedImage.path)
-    : selectedImage.thumbnail;
+  const imageSrc = fullImageSrc || selectedImage.thumbnail;
 
   return (
     <div
@@ -64,17 +87,33 @@ export function ImagePreview() {
         </button>
 
         {/* Image */}
-        <img
-          src={imageSrc}
-          alt={selectedImage.filename}
-          className={`rounded-lg ${
-            fullSize
-              ? "max-h-none max-w-none cursor-zoom-out"
-              : "max-h-[80vh] max-w-[85vw] cursor-zoom-in object-contain"
-          }`}
-          draggable={false}
-          onClick={() => setFullSize(!fullSize)}
-        />
+        <div className="relative">
+          {imageError ? (
+            <div className="flex h-40 w-80 items-center justify-center rounded-lg bg-[var(--color-bg-secondary)]">
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Failed to load image
+              </p>
+            </div>
+          ) : (
+            <img
+              src={imageSrc}
+              alt={selectedImage.filename}
+              className={`rounded-lg ${
+                fullSize
+                  ? "max-h-none max-w-none cursor-zoom-out"
+                  : "max-h-[80vh] max-w-[85vw] cursor-zoom-in object-contain"
+              }`}
+              draggable={false}
+              onClick={() => setFullSize(!fullSize)}
+            />
+          )}
+          {/* Loading overlay */}
+          {loadingFull && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">
+              <Loader2 size={24} className="animate-spin text-white" />
+            </div>
+          )}
+        </div>
 
         {/* Bottom bar */}
         <div className="mt-2 flex items-center justify-between rounded-lg bg-[var(--color-bg-secondary)] px-3 py-2">

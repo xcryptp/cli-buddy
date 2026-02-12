@@ -11,7 +11,7 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 #[cfg(target_os = "windows")]
-fn get_cursor_position() -> Option<(i32, i32)> {
+fn get_cursor_position() -> Option<(f64, f64)> {
     #[repr(C)]
     struct POINT {
         x: i32,
@@ -19,19 +19,22 @@ fn get_cursor_position() -> Option<(i32, i32)> {
     }
     extern "system" {
         fn GetCursorPos(lp_point: *mut POINT) -> i32;
+        fn GetDpiForSystem() -> u32;
     }
     unsafe {
         let mut point = std::mem::MaybeUninit::<POINT>::uninit();
         if GetCursorPos(point.as_mut_ptr()) != 0 {
             let point = point.assume_init();
-            Some((point.x, point.y))
+            let dpi = GetDpiForSystem();
+            let scale = dpi as f64 / 96.0;
+            Some((point.x as f64 / scale, point.y as f64 / scale))
         } else {
             None
         }
     }
 }
 
-fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
+pub fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
     use tauri::WebviewUrl;
     use tauri::webview::WebviewWindowBuilder;
 
@@ -58,13 +61,14 @@ fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
     .resizable(false)
     .skip_taskbar(true);
 
-    // Position near cursor on Windows
+    // Position near cursor on Windows (DPI-aware logical coordinates)
     #[cfg(target_os = "windows")]
     {
         if let Some((x, y)) = get_cursor_position() {
-            // Offset slightly so popup doesn't cover cursor
-            let popup_x = (x - 175).max(0) as f64; // center horizontally
-            let popup_y = (y - 460).max(0) as f64; // above cursor
+            let popup_w = 350.0;
+            let popup_h = 450.0;
+            let popup_x = (x - popup_w / 2.0).max(0.0);
+            let popup_y = (y - popup_h - 10.0).max(0.0);
             builder = builder.position(popup_x, popup_y);
         } else {
             builder = builder.center();
@@ -106,6 +110,7 @@ pub fn run() {
             screenshot::get_screenshots,
             screenshot::delete_screenshot,
             screenshot::get_save_directory,
+            screenshot::get_image_base64,
             monitor_cmd::toggle_monitor,
             monitor_cmd::get_monitor_status,
             settings::get_settings,

@@ -92,27 +92,50 @@ export function GalleryView() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-3">
-          {/* Images section */}
-          {showImages && hasImages && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {screenshots.map((screenshot) => (
-                <ThumbnailCard
-                  key={screenshot.filename}
-                  screenshot={screenshot}
-                />
-              ))}
+          {filterMode === "all" && hasImages && hasText ? (
+            /* Split layout: images left, text right */
+            <div className="flex gap-3" style={{ minHeight: 0 }}>
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-3">
+                  {screenshots.map((screenshot) => (
+                    <ThumbnailCard
+                      key={screenshot.filename}
+                      screenshot={screenshot}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <div className="flex flex-col gap-2">
+                  {textEntries.map((entry) => (
+                    <TextCard key={entry.id} entry={entry} />
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Images only */}
+              {showImages && hasImages && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {screenshots.map((screenshot) => (
+                    <ThumbnailCard
+                      key={screenshot.filename}
+                      screenshot={screenshot}
+                    />
+                  ))}
+                </div>
+              )}
 
-          {/* Text section */}
-          {showText && hasText && (
-            <div
-              className={`flex flex-col gap-2 ${showImages && hasImages ? "mt-3" : ""}`}
-            >
-              {textEntries.map((entry) => (
-                <TextCard key={entry.id} entry={entry} />
-              ))}
-            </div>
+              {/* Text only */}
+              {showText && hasText && (
+                <div className="flex flex-col gap-2">
+                  {textEntries.map((entry) => (
+                    <TextCard key={entry.id} entry={entry} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

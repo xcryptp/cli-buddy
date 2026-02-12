@@ -1,6 +1,6 @@
 [package]
 name = "cli-buddy"
-version = "0.1.1"
+version = "0.2.0"
 description = "CLI Buddy - Your CLI Companion on Windows"
 authors = ["hyunsu"]
 edition = "2021"
