@@ -12,13 +12,13 @@
 
 <p align="center">
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square" alt="Latest Release" />
+    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square&v=2" alt="Latest Release" />
   </a>
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square" alt="Downloads" />
+    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square&v=2" alt="Downloads" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square&v=2" alt="License" />
   </a>
 </p>
 
