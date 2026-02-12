@@ -9,9 +9,50 @@ interface SettingsPanelProps {
   onClose: () => void;
 }
 
+// Map browser key names to Tauri shortcut format
+function keyEventToShortcut(e: KeyboardEvent): string | null {
+  const modifiers: string[] = [];
+  if (e.ctrlKey) modifiers.push("Ctrl");
+  if (e.altKey) modifiers.push("Alt");
+  if (e.shiftKey) modifiers.push("Shift");
+  if (e.metaKey) modifiers.push("Super");
+
+  // Ignore if only modifier keys pressed
+  const key = e.key;
+  if (["Control", "Alt", "Shift", "Meta"].includes(key)) return null;
+  if (modifiers.length === 0) return null; // require at least one modifier
+
+  // Map special keys
+  const keyMap: Record<string, string> = {
+    " ": "Space",
+    ArrowUp: "Up",
+    ArrowDown: "Down",
+    ArrowLeft: "Left",
+    ArrowRight: "Right",
+    Escape: "Escape",
+    Enter: "Enter",
+    Backspace: "Backspace",
+    Delete: "Delete",
+    Tab: "Tab",
+    Home: "Home",
+    End: "End",
+    PageUp: "PageUp",
+    PageDown: "PageDown",
+    Insert: "Insert",
+  };
+
+  let mappedKey = keyMap[key] || key.toUpperCase();
+
+  // Function keys
+  if (/^F\d+$/.test(key)) mappedKey = key;
+
+  return [...modifiers, mappedKey].join("+");
+}
+
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [recording, setRecording] = useState(false);
   const t = useScreenshotStore((s) => s.t);
   const setLanguage = useScreenshotStore((s) => s.setLanguage);
 
@@ -41,6 +82,31 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   ) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
   };
+
+  // Shortcut recorder
+  useEffect(() => {
+    if (!recording) return;
+    const handler = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const shortcut = keyEventToShortcut(e);
+      if (shortcut) {
+        updateField("global_shortcut", shortcut);
+        setRecording(false);
+      }
+    };
+    const cancelHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setRecording(false);
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    window.addEventListener("keyup", cancelHandler, true);
+    return () => {
+      window.removeEventListener("keydown", handler, true);
+      window.removeEventListener("keyup", cancelHandler, true);
+    };
+  }, [recording]);
 
   if (!isOpen) return null;
 
@@ -193,18 +259,25 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               />
             </div>
 
-            {/* Global Shortcut */}
+            {/* Global Shortcut - Key Recorder */}
             <div>
               <label className="mb-1 block text-xs font-medium text-[var(--color-text-secondary)]">
                 {t("globalShortcut")}
               </label>
-              <input
-                type="text"
-                value={settings.global_shortcut}
-                onChange={(e) => updateField("global_shortcut", e.target.value)}
-                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-accent)]"
-                placeholder="Alt+Shift+V"
-              />
+              <button
+                onClick={() => setRecording(true)}
+                className={`w-full rounded-md border px-3 py-1.5 text-left text-xs transition-colors ${
+                  recording
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                    : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] hover:border-[var(--color-accent)]/50"
+                }`}
+              >
+                {recording
+                  ? settings.language === "ko"
+                    ? "키 조합을 눌러주세요... (ESC: 취소)"
+                    : "Press a key combination... (ESC: cancel)"
+                  : settings.global_shortcut || "Alt+Shift+V"}
+              </button>
             </div>
 
             {/* Toggles */}

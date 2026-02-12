@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { ClipboardCopy, Trash2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { ClipboardCopy, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { CopyButton } from "../common/CopyButton";
 import { useScreenshotStore } from "../../stores/screenshotStore";
@@ -12,6 +12,7 @@ interface TextCardProps {
 export function TextCard({ entry }: TextCardProps) {
   const { deleteTextEntry, pasteFromHistory } = useScreenshotStore();
   const t = useScreenshotStore((s) => s.t);
+  const [expanded, setExpanded] = useState(false);
 
   const handleCopy = useCallback(
     () => pasteFromHistory(entry.content, "text"),
@@ -30,18 +31,47 @@ export function TextCard({ entry }: TextCardProps) {
     }
   })();
 
+  const isLong = entry.char_count > 100;
+
   return (
     <div className="group rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 transition-colors hover:border-[var(--color-accent)]/30">
-      <pre className="mb-2 line-clamp-3 whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-[var(--color-text-primary)]">
-        {entry.preview}
-        {entry.char_count > 100 && "..."}
-      </pre>
+      <div
+        className={isLong ? "cursor-pointer" : ""}
+        onClick={() => isLong && setExpanded(!expanded)}
+      >
+        <pre
+          className={`mb-2 whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-[var(--color-text-primary)] ${
+            expanded ? "max-h-[60vh] overflow-y-auto" : "line-clamp-3"
+          }`}
+        >
+          {expanded ? entry.content : entry.preview}
+          {!expanded && isLong && "..."}
+        </pre>
+      </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[var(--color-text-secondary)]">
-          {dateStr} &middot; {entry.char_count.toLocaleString()}
-          {t("chars")}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-[var(--color-text-secondary)]">
+            {dateStr} &middot; {entry.char_count.toLocaleString()}
+            {t("chars")}
+          </span>
+          {isLong && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-0.5 text-[10px] text-[var(--color-accent)] hover:underline"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp size={10} />
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={10} />
+                </>
+              )}
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-1">
           <CopyButton

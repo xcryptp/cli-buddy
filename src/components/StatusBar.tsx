@@ -10,6 +10,7 @@ interface StatusBarProps {
 export function StatusBar({ onSettingsClick }: StatusBarProps) {
   const { isMonitoring, toggleMonitor } = useMonitorStatus();
   const screenshotCount = useScreenshotStore((s) => s.screenshots.length);
+  const textCount = useScreenshotStore((s) => s.textEntries.length);
   const t = useScreenshotStore((s) => s.t);
 
   return (
@@ -19,7 +20,7 @@ export function StatusBar({ onSettingsClick }: StatusBarProps) {
           CLI Buddy
         </h1>
         <span className="text-xs text-[var(--color-text-secondary)]">
-          {screenshotCount} {t("screenshots")}
+          {screenshotCount} {t("screenshots")} · {textCount} {t("textEntries")}
         </span>
       </div>
 

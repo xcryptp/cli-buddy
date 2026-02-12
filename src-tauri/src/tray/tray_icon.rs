@@ -15,7 +15,11 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .items(&[&toggle_monitor, &open_folder, &show_window, &quit])
         .build()?;
 
+    let icon = app.default_window_icon().cloned()
+        .unwrap_or_else(|| tauri::image::Image::from_bytes(include_bytes!("../../icons/icon.png")).unwrap());
+
     TrayIconBuilder::new()
+        .icon(icon)
         .menu(&menu)
         .tooltip("CLI Buddy")
         .on_menu_event(move |app, event| match event.id().as_ref() {

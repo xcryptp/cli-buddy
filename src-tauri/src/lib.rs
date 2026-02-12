@@ -10,6 +10,27 @@ use state::AppState;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
+#[cfg(target_os = "windows")]
+fn get_cursor_position() -> Option<(i32, i32)> {
+    #[repr(C)]
+    struct POINT {
+        x: i32,
+        y: i32,
+    }
+    extern "system" {
+        fn GetCursorPos(lp_point: *mut POINT) -> i32;
+    }
+    unsafe {
+        let mut point = std::mem::MaybeUninit::<POINT>::uninit();
+        if GetCursorPos(point.as_mut_ptr()) != 0 {
+            let point = point.assume_init();
+            Some((point.x, point.y))
+        } else {
+            None
+        }
+    }
+}
+
 fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
     use tauri::WebviewUrl;
     use tauri::webview::WebviewWindowBuilder;
@@ -25,7 +46,7 @@ fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
-    WebviewWindowBuilder::new(
+    let mut builder = WebviewWindowBuilder::new(
         app,
         "clipboard-popup",
         WebviewUrl::App("index.html?mode=popup".into()),
@@ -35,10 +56,29 @@ fn create_popup_window(app: &tauri::AppHandle) -> Result<(), String> {
     .decorations(false)
     .always_on_top(true)
     .resizable(false)
-    .skip_taskbar(true)
-    .center()
-    .build()
-    .map_err(|e| format!("Failed to create popup: {}", e))?;
+    .skip_taskbar(true);
+
+    // Position near cursor on Windows
+    #[cfg(target_os = "windows")]
+    {
+        if let Some((x, y)) = get_cursor_position() {
+            // Offset slightly so popup doesn't cover cursor
+            let popup_x = (x - 175).max(0) as f64; // center horizontally
+            let popup_y = (y - 460).max(0) as f64; // above cursor
+            builder = builder.position(popup_x, popup_y);
+        } else {
+            builder = builder.center();
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        builder = builder.center();
+    }
+
+    builder
+        .build()
+        .map_err(|e| format!("Failed to create popup: {}", e))?;
 
     Ok(())
 }

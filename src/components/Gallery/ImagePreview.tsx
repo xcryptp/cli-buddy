@@ -1,14 +1,17 @@
-import { useCallback, useEffect } from "react";
-import { X, ClipboardCopy, Image, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { X, ClipboardCopy, Image, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import { useScreenshotStore } from "../../stores/screenshotStore";
 import { CopyButton } from "../common/CopyButton";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 export function ImagePreview() {
   const { selectedImage, setSelectedImage, copyPath, copyImage, deleteScreenshot } =
     useScreenshotStore();
+  const [fullSize, setFullSize] = useState(false);
 
   const handleClose = useCallback(() => {
     setSelectedImage(null);
+    setFullSize(false);
   }, [setSelectedImage]);
 
   const handleDelete = useCallback(async () => {
@@ -20,21 +23,36 @@ export function ImagePreview() {
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") {
+        if (fullSize) {
+          setFullSize(false);
+        } else {
+          handleClose();
+        }
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [handleClose]);
+  }, [handleClose, fullSize]);
+
+  // Reset fullSize when image changes
+  useEffect(() => {
+    setFullSize(false);
+  }, [selectedImage]);
 
   if (!selectedImage) return null;
+
+  const imageSrc = fullSize
+    ? convertFileSrc(selectedImage.path)
+    : selectedImage.thumbnail;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={handleClose}
+      onClick={fullSize ? () => setFullSize(false) : handleClose}
     >
       <div
-        className="relative max-h-[90vh] max-w-[90vw]"
+        className={`relative ${fullSize ? "max-h-[98vh] max-w-[98vw] overflow-auto" : "max-h-[90vh] max-w-[90vw]"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -47,13 +65,15 @@ export function ImagePreview() {
 
         {/* Image */}
         <img
-          src={selectedImage.thumbnail.replace(
-            "data:image/png;base64,",
-            `data:image/png;base64,`,
-          )}
+          src={imageSrc}
           alt={selectedImage.filename}
-          className="max-h-[80vh] max-w-[85vw] rounded-lg object-contain"
+          className={`rounded-lg ${
+            fullSize
+              ? "max-h-none max-w-none cursor-zoom-out"
+              : "max-h-[80vh] max-w-[85vw] cursor-zoom-in object-contain"
+          }`}
           draggable={false}
+          onClick={() => setFullSize(!fullSize)}
         />
 
         {/* Bottom bar */}
@@ -62,6 +82,13 @@ export function ImagePreview() {
             {selectedImage.path}
           </p>
           <div className="flex items-center gap-1.5 pl-3">
+            <button
+              onClick={() => setFullSize(!fullSize)}
+              title={fullSize ? "Fit to screen" : "Original size"}
+              className="flex items-center justify-center rounded-md p-1.5 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+            >
+              {fullSize ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
             <CopyButton
               onClick={() => copyPath(selectedImage.path)}
               icon={<ClipboardCopy size={14} />}
