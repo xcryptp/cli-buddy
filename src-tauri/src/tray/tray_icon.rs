@@ -15,11 +15,14 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .items(&[&toggle_monitor, &open_folder, &show_window, &quit])
         .build()?;
 
-    let icon = app.default_window_icon().cloned()
-        .unwrap_or_else(|| tauri::image::Image::from_bytes(include_bytes!("../../icons/icon.png")).unwrap());
-
     TrayIconBuilder::new()
-        .icon(icon)
+        .icon(tauri::image::Image::from_path("icons/icon.png").unwrap_or_else(|_| {
+            // Fallback: use raw RGBA from included PNG via image crate
+            let png_data = include_bytes!("../../icons/32x32.png");
+            let img = image::load_from_memory(png_data).unwrap().to_rgba8();
+            let (w, h) = img.dimensions();
+            tauri::image::Image::new_owned(img.into_raw(), w, h)
+        }))
         .menu(&menu)
         .tooltip("CLI Buddy")
         .on_menu_event(move |app, event| match event.id().as_ref() {
