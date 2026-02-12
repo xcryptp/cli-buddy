@@ -12,13 +12,13 @@
 
 <p align="center">
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square&v=3" alt="Latest Release" />
+    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square&v=4" alt="Latest Release" />
   </a>
   <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
-    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square&v=3" alt="Downloads" />
+    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square&v=4" alt="Downloads" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square&v=3" alt="License" />
+    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square&v=4" alt="License" />
   </a>
 </p>
 
@@ -78,6 +78,9 @@
 | **Filter** | All / Images / Text / DevTools tabs / 전체 / 이미지 / 텍스트 / DevTools 필터 |
 
 ### WSL2 DevTools / WSL2 개발자 도구
+
+> **Actively in development** — This feature is under continuous development, testing, and improvement.
+> **지속적으로 개발, 테스트, 개선 중인 기능입니다.**
 
 | Feature | Description |
 |---------|-------------|
@@ -253,4 +256,8 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 <p align="center">
   Made by <a href="https://github.com/xcryptp">xcryptp</a> · Built with Tauri + React + Rust
+  <br />
+  <a href="https://myportfolio.xcryptp.workers.dev/">Portfolio</a>
+  <br />
+  <sub>프로덕트 깎는 4람</sub>
 </p>
