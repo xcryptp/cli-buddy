@@ -72,9 +72,10 @@
 | **Auto-save screenshots** | Detects clipboard images → saves as PNG automatically / 클립보드 이미지 감지 → PNG 자동 저장 |
 | **Text clipboard history** | Tracks every text you copy (up to 10KB/entry) / 복사한 텍스트 자동 기록 |
 | **Deduplicate** | SHA-256 hash prevents saving identical screenshots / SHA-256으로 동일 스크린샷 중복 방지 |
-| **Gallery view** | Thumbnail grid + full-size preview with zoom / 썸네일 그리드 + 원본 크기 확대 |
+| **Gallery view** | Thumbnail grid with hover overlay + full-size preview / 썸네일 그리드 (호버 오버레이) + 원본 크기 확대 |
+| **Split layout** | All mode shows images left, text right / All 모드에서 이미지·텍스트 좌우 분할 |
 | **One-click copy** | Copy file path in Windows (`C:\...`) or WSL (`/mnt/c/...`) format / 경로 원클릭 복사 |
-| **Expand text** | Click to expand long text entries / 긴 텍스트 클릭 시 전체 보기 |
+| **Expand text** | Click to expand/collapse long text entries with labels / 긴 텍스트 펼치기·접기 |
 | **Filter** | All / Images / Text / DevTools tabs / 전체 / 이미지 / 텍스트 / DevTools 필터 |
 
 ### WSL2 DevTools / WSL2 개발자 도구
@@ -86,7 +87,8 @@
 |---------|-------------|
 | **Real-time Vmmem monitoring** | Shows WSL2 memory usage in status bar (color-coded) / 상태바에 WSL2 메모리 실시간 표시 |
 | **Memory warning** | Green → Yellow (75%) → Red (90%) with progress bar / 단계별 경고 표시 |
-| **Claude Code sessions** | Lists all recent sessions with project name, time, message count / Claude 세션 목록 표시 |
+| **Claude Code sessions** | Lists sessions with project, topic, time, message count / 세션 목록 (프로젝트, 토픽, 시간, 메시지 수) |
+| **Session topic** | Shows first user message as topic for quick identification / 첫 메시지를 토픽으로 표시 |
 | **One-click resume** | Copy `claude --resume <id>` to clipboard / 이어하기 명령어 원클릭 복사 |
 | **WSL restart** | Restart WSL from tray menu or DevTools panel / 트레이 메뉴 또는 UI에서 WSL 재시작 |
 
@@ -95,11 +97,12 @@
 | Feature | Description |
 |---------|-------------|
 | **System tray** | Runs in background, left-click to show, right-click for menu / 백그라운드 실행 |
-| **Global shortcut** | `Alt+Shift+V` to show app from anywhere (customizable, key recorder) / 글로벌 단축키 |
+| **Global shortcut** | `Alt+Shift+V` to show app from anywhere (customizable, live re-registration) / 글로벌 단축키 (변경 즉시 반영) |
+| **Popup keyboard nav** | Arrow keys + Enter to navigate and select clipboard entries / 팝업에서 키보드 탐색 |
+| **Popup near cursor** | DPI-aware positioning near mouse cursor / DPI 인식 마우스 커서 근처 팝업 |
 | **Auto-update check** | Checks GitHub releases on startup, shows banner / 시작 시 업데이트 확인 |
 | **i18n** | Korean / English / 한국어·영어 지원 |
 | **Auto-start** | Optional launch on Windows boot / Windows 부팅 시 자동 실행 |
-| **Popup near cursor** | Global shortcut opens popup near mouse position / 마우스 커서 근처에 팝업 |
 
 ---
 
@@ -177,6 +180,24 @@ claude --resume 680a1b99-ec61-44ca-8019-775f099d5165
 ---
 
 ## Changelog
+
+### v0.2.0
+
+**Popup UX, Image Preview Overhaul & Session Topic Display**
+
+- **NEW**: Popup keyboard navigation (Arrow keys + Enter) with selection highlight
+- **NEW**: Image preview loads via backend IPC instead of file protocol (security fix)
+- **NEW**: Claude session topic display (first user message)
+- **NEW**: Gallery split layout — images left, text right in All mode
+- **NEW**: Thumbnail hover overlay with zoom icon
+- **FIX**: DPI-aware popup positioning (high-DPI monitor support)
+- **FIX**: Popup no longer closes when dragging the window
+- **FIX**: `vmmem*` wildcard detects both vmmem and vmmemWSL
+- **FIX**: Console window no longer flashes when running PowerShell/WSL commands
+- **IMPROVE**: Dynamic global shortcut re-registration on settings change
+- **IMPROVE**: Claude session search — both Windows native + WSL paths via `wslpath`
+- **IMPROVE**: DevTools skeleton loading UI for stats and sessions
+- **IMPROVE**: Text card expand/collapse with labels
 
 ### v0.1.1
 
