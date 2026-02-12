@@ -1,6 +1,12 @@
 use serde::Serialize;
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 #[derive(Serialize, Clone)]
 pub struct VmmemStats {
     pub used_mb: u64,
@@ -20,10 +26,17 @@ pub struct ClaudeSession {
     pub resume_command: String,
 }
 
+fn new_hidden_command(program: &str) -> Command {
+    let mut cmd = Command::new(program);
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
+
 #[tauri::command]
 pub fn get_vmmem_stats() -> Result<VmmemStats, String> {
     // Get Vmmem process memory via PowerShell
-    let output = Command::new("powershell.exe")
+    let output = new_hidden_command("powershell.exe")
         .args([
             "-NoProfile",
             "-Command",
@@ -86,9 +99,6 @@ fn get_wsl_memory_limit() -> Option<u64> {
 
 #[tauri::command]
 pub fn get_claude_sessions() -> Result<Vec<ClaudeSession>, String> {
-    // WSL path from Windows: \\wsl$\Ubuntu\home\<user>\.claude\projects\
-    // Or through /mnt/ path from WSL context
-
     let wsl_home = get_wsl_home_path()?;
     let claude_dir = format!("{}/.claude/projects", wsl_home);
 
@@ -117,8 +127,16 @@ pub fn get_claude_sessions() -> Result<Vec<ClaudeSession>, String> {
 
         // Find .jsonl session files
         let project_path_full = project_entry.path();
-        for file_entry in std::fs::read_dir(&project_path_full).map_err(|e| e.to_string())? {
-            let file_entry = file_entry.map_err(|e| e.to_string())?;
+        let entries = match std::fs::read_dir(&project_path_full) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+
+        for file_entry in entries {
+            let file_entry = match file_entry {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
             let filename = file_entry.file_name().to_string_lossy().to_string();
 
             if !filename.ends_with(".jsonl") {
@@ -126,19 +144,20 @@ pub fn get_claude_sessions() -> Result<Vec<ClaudeSession>, String> {
             }
 
             let session_id = filename.trim_end_matches(".jsonl").to_string();
-            let metadata = file_entry.metadata().map_err(|e| e.to_string())?;
+            let metadata = match file_entry.metadata() {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
             let size_kb = metadata.len() / 1024;
 
             // Get last modified time
-            let modified = metadata
+            let last_modified = metadata
                 .modified()
-                .map_err(|e| e.to_string())?;
-            let duration = modified
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_err(|e| e.to_string())?;
-            let dt = chrono::DateTime::from_timestamp(duration.as_secs() as i64, 0)
+                .ok()
+                .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+                .and_then(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
+                .map(|dt| dt.format("%m/%d %H:%M").to_string())
                 .unwrap_or_default();
-            let last_modified = dt.format("%m/%d %H:%M").to_string();
 
             // Count messages (quick: count lines)
             let message_count = std::fs::read_to_string(file_entry.path())
@@ -169,8 +188,7 @@ pub fn get_claude_sessions() -> Result<Vec<ClaudeSession>, String> {
 }
 
 fn get_wsl_home_path() -> Result<String, String> {
-    // Try to get WSL home via `wsl` command
-    let output = Command::new("wsl.exe")
+    let output = new_hidden_command("wsl.exe")
         .args(["-e", "echo", "$HOME"])
         .output()
         .map_err(|e| format!("Failed to run wsl: {}", e))?;
@@ -181,9 +199,6 @@ fn get_wsl_home_path() -> Result<String, String> {
         return Err("Could not determine WSL home directory".to_string());
     }
 
-    // Convert WSL path to Windows UNC path: /home/user -> \\wsl$\Ubuntu\home\user
-    // Or we can use wsl.exe to access it
-    // Actually, from a Windows process, we access via \\wsl.localhost\Ubuntu\home\user
     let distro = get_default_wsl_distro().unwrap_or("Ubuntu".to_string());
     let windows_path = format!("\\\\wsl.localhost\\{}{}",
         distro,
@@ -194,13 +209,12 @@ fn get_wsl_home_path() -> Result<String, String> {
 }
 
 fn get_default_wsl_distro() -> Option<String> {
-    let output = Command::new("wsl.exe")
+    let output = new_hidden_command("wsl.exe")
         .args(["--list", "--quiet"])
         .output()
         .ok()?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // First line is the default distro (may have null bytes from UTF-16)
     stdout
         .lines()
         .next()
@@ -210,8 +224,7 @@ fn get_default_wsl_distro() -> Option<String> {
 
 #[tauri::command]
 pub fn restart_wsl() -> Result<String, String> {
-    // Shutdown WSL
-    let shutdown = Command::new("wsl.exe")
+    let shutdown = new_hidden_command("wsl.exe")
         .args(["--shutdown"])
         .output()
         .map_err(|e| format!("Failed to shutdown WSL: {}", e))?;
@@ -223,10 +236,9 @@ pub fn restart_wsl() -> Result<String, String> {
         ));
     }
 
-    // Wait a moment then restart by running a simple command
     std::thread::sleep(std::time::Duration::from_secs(2));
 
-    let restart = Command::new("wsl.exe")
+    let restart = new_hidden_command("wsl.exe")
         .args(["-e", "echo", "WSL restarted"])
         .output()
         .map_err(|e| format!("Failed to restart WSL: {}", e))?;

@@ -41,10 +41,14 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 let _ = open::that(&dir);
             }
             "restart_wsl" => {
-                let _ = std::process::Command::new("wsl.exe")
-                    .args(["--shutdown"])
-                    .spawn();
-                // WSL will auto-restart on next access
+                #[cfg(target_os = "windows")]
+                {
+                    use std::os::windows::process::CommandExt;
+                    let _ = std::process::Command::new("wsl.exe")
+                        .args(["--shutdown"])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .spawn();
+                }
             }
             "show_window" => {
                 if let Some(window) = app.get_webview_window("main") {
