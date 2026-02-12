@@ -49,23 +49,30 @@ jobs:
           releaseDraft: false
           prerelease: false
 
-      - name: Upload portable exe
-        shell: bash
+      - name: Find and upload portable exe
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.ref_name }}"
-          EXE_PATH="src-tauri/target/release/CLI Buddy.exe"
+          $tag = "${{ github.ref_name }}"
+          $releaseDir = "src-tauri/target/release"
 
-          if [ -f "$EXE_PATH" ]; then
-            echo "Found portable exe: $EXE_PATH"
-            # Rename for clarity
-            cp "$EXE_PATH" "CLI.Buddy.exe"
+          Write-Host "=== Listing release directory ==="
+          Get-ChildItem -Path $releaseDir -Filter "*.exe" | ForEach-Object {
+            Write-Host "  $($_.Name) ($([math]::Round($_.Length / 1MB, 1)) MB)"
+          }
 
-            # Upload to existing release
-            gh release upload "$TAG" "CLI.Buddy.exe" --clobber
-            echo "Uploaded CLI.Buddy.exe to release $TAG"
-          else
-            echo "Portable exe not found, listing release dir:"
-            ls -la src-tauri/target/release/*.exe 2>/dev/null || echo "No exe files found"
-          fi
+          # Find the app exe (not setup, not uninstall)
+          $candidates = Get-ChildItem -Path $releaseDir -Filter "*.exe" |
+            Where-Object { $_.Name -notmatch "setup|uninstall|WixTools" -and $_.Length -gt 1MB }
+
+          if ($candidates.Count -gt 0) {
+            $exe = $candidates[0]
+            Write-Host "Found portable exe: $($exe.FullName)"
+            Copy-Item $exe.FullName -Destination "CLI.Buddy.exe"
+            gh release upload $tag "CLI.Buddy.exe" --clobber
+            Write-Host "Uploaded CLI.Buddy.exe"
+          } else {
+            Write-Host "ERROR: No portable exe found!"
+            exit 1
+          }
