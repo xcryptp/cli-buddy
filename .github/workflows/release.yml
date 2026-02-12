@@ -6,59 +6,46 @@ on:
       - 'v*'
 
 jobs:
-  create-release:
+  release:
     permissions:
       contents: write
-    runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create_release.outputs.id }}
-      release_body: ${{ steps.changelog.outputs.body }}
+    runs-on: windows-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Generate changelog
-        id: changelog
+      - name: Generate release notes
+        id: notes
+        shell: bash
         run: |
-          PREV_TAG=$(git tag --sort=-creatordate | head -2 | tail -1)
-          if [ "$PREV_TAG" = "${{ github.ref_name }}" ]; then
-            COMMITS=$(git log --oneline --no-merges HEAD~20..HEAD)
+          # Get previous tag (if any)
+          PREV_TAG=$(git tag --sort=-creatordate | grep -v "${{ github.ref_name }}" | head -1 || true)
+
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log --oneline --no-merges ${PREV_TAG}..HEAD || echo "")
           else
-            COMMITS=$(git log --oneline --no-merges ${PREV_TAG}..${{ github.ref_name }})
+            COMMITS=$(git log --oneline --no-merges -20 || echo "Initial release")
           fi
 
-          BODY="## What's Changed
+          cat > release_notes.md << 'NOTES_EOF'
+          ## What's Changed
+          NOTES_EOF
 
-          ${COMMITS}
+          echo "$COMMITS" >> release_notes.md
+
+          cat >> release_notes.md << 'NOTES_EOF'
 
           ---
-
           ### Download
-          - \`.exe\` — Windows NSIS installer (recommended)
-          - \`.msi\` — Windows MSI installer"
+          - `.exe` — Windows NSIS installer (recommended)
+          - `.msi` — Windows MSI installer
+          NOTES_EOF
 
-          # Write to file for multiline output
-          echo "$BODY" > release_body.md
-          echo "body<<BODYEOF" >> $GITHUB_OUTPUT
-          cat release_body.md >> $GITHUB_OUTPUT
-          echo "BODYEOF" >> $GITHUB_OUTPUT
-
-  build:
-    needs: create-release
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest]
-
-    runs-on: ${{ matrix.platform }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          echo "Generated release notes:"
+          cat release_notes.md
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -83,6 +70,14 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'CLI Buddy ${{ github.ref_name }}'
-          releaseBody: ${{ needs.create-release.outputs.release_body }}
+          releaseBody: |
+            ## What's Changed
+
+            See [commit history](https://github.com/xcryptp/cli-buddy/commits/${{ github.ref_name }}) for details.
+
+            ---
+            ### Download
+            - `.exe` — Windows NSIS installer (recommended)
+            - `.msi` — Windows MSI installer
           releaseDraft: false
           prerelease: false
