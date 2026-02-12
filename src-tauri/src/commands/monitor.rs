@@ -7,7 +7,7 @@ pub fn toggle_monitor(app_handle: AppHandle, state: State<'_, AppState>) -> Resu
         state.watcher.stop();
         Ok(false)
     } else {
-        state.watcher.start(app_handle, state.settings.clone());
+        state.watcher.start(app_handle, state.settings.clone(), state.text_history.clone());
         Ok(true)
     }
 }

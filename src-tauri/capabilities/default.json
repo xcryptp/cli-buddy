@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "CLI Buddy default capabilities",
-  "windows": ["main"],
+  "windows": ["main", "clipboard-popup"],
   "permissions": [
     "core:default",
     "core:window:default",
@@ -10,6 +10,7 @@
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "core:window:allow-center",
+    "core:window:allow-destroy",
     "core:event:default",
     "core:event:allow-listen",
     "core:event:allow-emit",
@@ -30,8 +31,12 @@
     "dialog:allow-message",
     "dialog:allow-ask",
     "shell:allow-open",
+    "opener:default",
     "autostart:allow-enable",
     "autostart:allow-disable",
-    "autostart:allow-is-enabled"
+    "autostart:allow-is-enabled",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-is-registered"
   ]
 }

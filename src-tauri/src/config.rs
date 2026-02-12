@@ -2,6 +2,18 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+fn default_capture_text() -> bool {
+    true
+}
+
+fn default_max_text_entries() -> u32 {
+    50
+}
+
+fn default_global_shortcut() -> String {
+    "Alt+Shift+V".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     pub save_directory: String,
@@ -12,6 +24,12 @@ pub struct AppSettings {
     pub thumbnail_size: u32,
     pub language: String,
     pub path_format: String,
+    #[serde(default = "default_capture_text")]
+    pub capture_text: bool,
+    #[serde(default = "default_max_text_entries")]
+    pub max_text_entries: u32,
+    #[serde(default = "default_global_shortcut")]
+    pub global_shortcut: String,
 }
 
 impl Default for AppSettings {
@@ -29,6 +47,9 @@ impl Default for AppSettings {
             thumbnail_size: 200,
             language: "ko".to_string(),
             path_format: "windows".to_string(),
+            capture_text: default_capture_text(),
+            max_text_entries: default_max_text_entries(),
+            global_shortcut: default_global_shortcut(),
         }
     }
 }

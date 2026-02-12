@@ -1,4 +1,5 @@
 import { Activity, ActivitySquare, Settings } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useMonitorStatus } from "../hooks/useMonitorStatus";
 import { useScreenshotStore } from "../stores/screenshotStore";
 
@@ -42,6 +43,18 @@ export function StatusBar({ onSettingsClick }: StatusBarProps) {
               {t("paused")}
             </>
           )}
+        </button>
+
+        <button
+          onClick={() => openUrl("https://github.com/xcryptp/cli-buddy")}
+          className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+          title="GitHub"
+        >
+          <img
+            src="https://github.com/xcryptp.png"
+            alt="xcryptp"
+            className="h-5 w-5 rounded-full"
+          />
         </button>
 
         <button

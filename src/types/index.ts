@@ -6,6 +6,21 @@ export interface ScreenshotInfo {
   size_bytes: number;
 }
 
+export interface TextEntry {
+  id: string;
+  content: string;
+  preview: string;
+  hash: string;
+  created_at: string;
+  char_count: number;
+}
+
+export type ClipboardEntry =
+  | { type: "image"; data: ScreenshotInfo }
+  | { type: "text"; data: TextEntry };
+
+export type FilterMode = "all" | "images" | "text";
+
 export interface AppSettings {
   save_directory: string;
   polling_interval_ms: number;
@@ -15,6 +30,9 @@ export interface AppSettings {
   thumbnail_size: number;
   language: string;
   path_format: string;
+  capture_text: boolean;
+  max_text_entries: number;
+  global_shortcut: string;
 }
 
 export type Language = "ko" | "en";
@@ -44,6 +62,19 @@ export const translations = {
     save: "저장",
     saving: "저장 중...",
     openFolder: "폴더 열기",
+    // Text clipboard
+    captureText: "텍스트 클립보드 저장",
+    maxTextEntries: "최대 텍스트 보관 수",
+    globalShortcut: "글로벌 단축키",
+    filterAll: "전체",
+    filterImages: "이미지",
+    filterText: "텍스트",
+    noTextEntries: "텍스트 기록이 없습니다",
+    copyText: "텍스트 복사",
+    clearHistory: "기록 삭제",
+    chars: "자",
+    textEntries: "개의 텍스트",
+    noItems: "항목이 없습니다",
   },
   en: {
     appName: "CLI Buddy",
@@ -69,6 +100,19 @@ export const translations = {
     save: "Save",
     saving: "Saving...",
     openFolder: "Open Folder",
+    // Text clipboard
+    captureText: "Save text clipboard",
+    maxTextEntries: "Max text entries",
+    globalShortcut: "Global shortcut",
+    filterAll: "All",
+    filterImages: "Images",
+    filterText: "Text",
+    noTextEntries: "No text entries yet",
+    copyText: "Copy text",
+    clearHistory: "Clear history",
+    chars: "chars",
+    textEntries: "texts",
+    noItems: "No items",
   },
 } as const;
 

@@ -1,10 +1,18 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
-import type { AppSettings, Language, ScreenshotInfo } from "../types";
+import type {
+  AppSettings,
+  FilterMode,
+  Language,
+  ScreenshotInfo,
+  TextEntry,
+} from "../types";
 import { translations } from "../types";
 
 interface ScreenshotStore {
   screenshots: ScreenshotInfo[];
+  textEntries: TextEntry[];
+  filterMode: FilterMode;
   isMonitoring: boolean;
   isLoading: boolean;
   selectedImage: ScreenshotInfo | null;
@@ -16,6 +24,7 @@ interface ScreenshotStore {
   setMonitoring: (status: boolean) => void;
   setSelectedImage: (info: ScreenshotInfo | null) => void;
   setLanguage: (lang: Language) => void;
+  setFilterMode: (mode: FilterMode) => void;
   t: (key: keyof (typeof translations)["ko"]) => string;
 
   copyPath: (path: string) => Promise<void>;
@@ -24,10 +33,20 @@ interface ScreenshotStore {
   toggleMonitor: () => Promise<void>;
   fetchMonitorStatus: () => Promise<void>;
   fetchSettings: () => Promise<void>;
+
+  // Text history
+  fetchTextHistory: () => Promise<void>;
+  addTextEntry: (entry: TextEntry) => void;
+  removeTextEntry: (id: string) => void;
+  deleteTextEntry: (id: string) => Promise<void>;
+  clearTextHistory: () => Promise<void>;
+  pasteFromHistory: (content: string, entryType: string) => Promise<void>;
 }
 
 export const useScreenshotStore = create<ScreenshotStore>((set, get) => ({
   screenshots: [],
+  textEntries: [],
+  filterMode: "all",
   isMonitoring: false,
   isLoading: false,
   selectedImage: null,
@@ -36,7 +55,8 @@ export const useScreenshotStore = create<ScreenshotStore>((set, get) => ({
   fetchScreenshots: async () => {
     set({ isLoading: true });
     try {
-      const screenshots = await invoke<ScreenshotInfo[]>("get_screenshots");
+      const screenshots =
+        await invoke<ScreenshotInfo[]>("get_screenshots");
       set({ screenshots });
     } catch (e) {
       console.error("Failed to fetch screenshots:", e);
@@ -59,8 +79,8 @@ export const useScreenshotStore = create<ScreenshotStore>((set, get) => ({
 
   setMonitoring: (status) => set({ isMonitoring: status }),
   setSelectedImage: (info) => set({ selectedImage: info }),
-
   setLanguage: (lang) => set({ language: lang }),
+  setFilterMode: (mode) => set({ filterMode: mode }),
 
   t: (key) => {
     const lang = get().language;
@@ -97,5 +117,41 @@ export const useScreenshotStore = create<ScreenshotStore>((set, get) => ({
     } catch (e) {
       console.error("Failed to fetch settings:", e);
     }
+  },
+
+  // Text history actions
+  fetchTextHistory: async () => {
+    try {
+      const entries = await invoke<TextEntry[]>("get_text_history");
+      set({ textEntries: entries });
+    } catch (e) {
+      console.error("Failed to fetch text history:", e);
+    }
+  },
+
+  addTextEntry: (entry) => {
+    set((state) => ({
+      textEntries: [entry, ...state.textEntries],
+    }));
+  },
+
+  removeTextEntry: (id) => {
+    set((state) => ({
+      textEntries: state.textEntries.filter((t) => t.id !== id),
+    }));
+  },
+
+  deleteTextEntry: async (id) => {
+    await invoke("delete_text_entry", { id });
+    get().removeTextEntry(id);
+  },
+
+  clearTextHistory: async () => {
+    await invoke("clear_text_history");
+    set({ textEntries: [] });
+  },
+
+  pasteFromHistory: async (content, entryType) => {
+    await invoke("paste_from_history", { content, entryType });
   },
 }));

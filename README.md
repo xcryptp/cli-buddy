@@ -5,74 +5,75 @@
 <h1 align="center">CLI Buddy</h1>
 
 <p align="center">
-  Windows 스크린샷을 자동으로 감지·저장·관리하는 데스크톱 앱
+  Windows 클립보드를 자동으로 감지·저장·관리하는 데스크톱 앱
   <br />
-  Auto-detect, save, and manage Windows screenshots from your desktop.
+  Auto-detect, save, and manage your clipboard (images & text) from your desktop.
 </p>
 
 <p align="center">
+  <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
+    <img src="https://img.shields.io/github/v/release/xcryptp/cli-buddy?style=flat-square" alt="Latest Release" />
+  </a>
+  <a href="https://github.com/xcryptp/cli-buddy/releases/latest">
+    <img src="https://img.shields.io/github/downloads/xcryptp/cli-buddy/total?style=flat-square" alt="Downloads" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/xcryptp/cli-buddy?style=flat-square" alt="License" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#download--다운로드">Download</a> •
   <a href="#features--주요-기능">Features</a> •
-  <a href="#installation--설치">Install</a> •
   <a href="#usage--사용법">Usage</a> •
-  <a href="#development--개발">Dev</a> •
+  <a href="#settings--설정">Settings</a> •
+  <a href="#build-from-source--소스에서-빌드">Build</a> •
   <a href="#license">License</a>
 </p>
 
 ---
 
+## Download / 다운로드
+
+**[Latest Release](https://github.com/xcryptp/cli-buddy/releases/latest)** 에서 Windows 설치 파일을 다운로드하세요.
+
+| File | Description |
+|------|-------------|
+| `CLI.Buddy_x.x.x_x64-setup.exe` | Windows 설치 프로그램 (NSIS) |
+| `CLI.Buddy_x.x.x_x64_en-US.msi` | Windows 설치 프로그램 (MSI) |
+
+> 설치 후 시스템 트레이에서 실행됩니다.
+
+---
+
 ## Why CLI Buddy? / 왜 CLI Buddy?
 
-**EN** — Windows `Win+Shift+S` copies a screenshot to the clipboard, but it disappears the moment you copy something else. CLI Buddy watches your clipboard in the background, automatically saves every screenshot as a PNG file, and lets you copy the file path (Windows or WSL format) with a single click. Perfect for developers who paste screenshot paths into terminals, markdown, or chat.
+**EN** — Windows `Win+Shift+S` copies a screenshot to the clipboard, but it disappears the moment you copy something else. CLI Buddy watches your clipboard in the background, automatically saves every screenshot as a PNG file, and lets you copy the file path (Windows or WSL format) with a single click. It also tracks your text clipboard history so you never lose copied text again.
 
-**KO** — Windows `Win+Shift+S`로 캡처하면 클립보드에만 남아서 다른 걸 복사하면 사라집니다. CLI Buddy는 백그라운드에서 클립보드를 감시하고, 스크린샷이 감지되면 자동으로 PNG 파일로 저장합니다. 저장된 파일의 경로(Windows/WSL 형식)를 원클릭으로 복사할 수 있어서, 터미널·마크다운·채팅에 경로를 붙여넣는 개발자에게 유용합니다.
+**KO** — `Win+Shift+S`로 캡처하면 클립보드에만 남아서 다른 걸 복사하면 사라집니다. CLI Buddy는 백그라운드에서 클립보드를 감시하고, 스크린샷은 자동으로 PNG 파일로 저장하며, 텍스트 복사 기록도 함께 관리합니다. 저장된 파일의 경로(Windows/WSL 형식)를 원클릭으로 복사할 수 있어서, 터미널·마크다운·채팅에 경로를 붙여넣는 개발자에게 유용합니다.
 
 ---
 
 ## Features / 주요 기능
 
-| Feature | Description |
-|---------|-------------|
-| **Auto Capture** | Detects clipboard images and saves as PNG automatically |
-| **Duplicate Detection** | SHA-256 hashing prevents saving the same screenshot twice |
-| **Gallery View** | Browse saved screenshots with thumbnails in a responsive grid |
-| **Path Copy** | One-click copy in **Windows** (`C:\...`) or **WSL** (`/mnt/c/...`) format |
-| **Image Copy** | Copy the screenshot image back to clipboard |
-| **System Tray** | Runs in the background; left-click to show, right-click for menu |
-| **Auto Cleanup** | Keeps up to N screenshots (configurable), auto-deletes oldest |
-| **Settings** | Save directory, polling interval, auto-start, language (한/EN), and more |
-| **Bilingual UI** | Full Korean & English interface |
+### Screenshot / 스크린샷
+- **자동 캡처** — 클립보드 이미지를 감지해 PNG로 자동 저장
+- **중복 제거** — SHA-256 해싱으로 동일 스크린샷 중복 저장 방지
+- **갤러리 뷰** — 썸네일 그리드 + 풀사이즈 미리보기
+- **경로 복사** — Windows (`C:\...`) 또는 WSL (`/mnt/c/...`) 형식 원클릭 복사
+- **이미지 복사** — 스크린샷을 클립보드로 다시 복사
+- **자동 정리** — 최대 보관 수 초과 시 오래된 것부터 자동 삭제
 
----
+### Text Clipboard / 텍스트 클립보드
+- **텍스트 기록** — 복사한 텍스트를 자동으로 기록 (최대 10KB/항목)
+- **히스토리 관리** — 텍스트 기록 검색, 재복사, 개별/전체 삭제
+- **필터** — 전체 / 이미지 / 텍스트 필터링
 
-## Installation / 설치
-
-### Download / 다운로드
-
-> Releases will be available on the [Releases](../../releases) page.
-
-### Build from Source / 소스에서 빌드
-
-**Prerequisites / 필수 조건:**
-- [Node.js](https://nodejs.org/) ≥ 18
-- [Rust](https://rustup.rs/) ≥ 1.77
-- [Tauri CLI](https://v2.tauri.app/start/prerequisites/)
-
-```bash
-# Clone
-git clone https://github.com/xcryptp/cli-buddy.git
-cd cli-buddy
-
-# Install dependencies
-npm install
-
-# Run in dev mode
-npm run tauri dev
-
-# Build for production
-npm run tauri build
-```
-
-Build output: `src-tauri/target/release/bundle/` (NSIS installer & MSI)
+### General / 일반
+- **시스템 트레이** — 백그라운드 실행, 좌클릭으로 표시, 우클릭 메뉴
+- **글로벌 단축키** — `Alt+Shift+V`로 어디서든 앱 표시 (설정 변경 가능)
+- **다국어 UI** — 한국어 / English 지원
+- **자동 시작** — Windows 부팅 시 자동 실행 (선택)
 
 ---
 
@@ -80,53 +81,45 @@ Build output: `src-tauri/target/release/bundle/` (NSIS installer & MSI)
 
 ### Quick Start / 빠른 시작
 
-1. **앱 실행** — CLI Buddy를 실행하면 시스템 트레이에 아이콘이 나타납니다.
-2. **스크린샷 캡처** — `Win+Shift+S`로 화면을 캡처합니다.
-3. **자동 저장** — 클립보드의 이미지가 자동으로 PNG 파일로 저장됩니다.
-4. **경로 복사** — 갤러리에서 📋 버튼을 클릭하면 파일 경로가 복사됩니다.
+1. **설치 & 실행** — 설치 파일 실행 → 시스템 트레이에 아이콘 표시
+2. **스크린샷 캡처** — `Win+Shift+S`로 화면 캡처 → 자동 저장
+3. **텍스트 복사** — 아무 텍스트 복사 → 자동 기록
+4. **경로/텍스트 복사** — 갤러리에서 클릭 한 번으로 복사
+5. **빠른 접근** — `Alt+Shift+V`로 어디서든 앱 표시
 
 ### Path Formats / 경로 형식
 
-| Format | Example |
-|--------|---------|
-| Windows | `C:\Users\you\Pictures\CLIBuddy\screenshot_2026-02-12_14-30-45.png` |
-| WSL | `/mnt/c/Users/you/Pictures/CLIBuddy/screenshot_2026-02-12_14-30-45.png` |
-
-Settings에서 기본 경로 형식을 Windows 또는 WSL로 변경할 수 있습니다.
-
-### Settings / 설정
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Save Directory | `Pictures/CLIBuddy` | 스크린샷 저장 경로 |
-| Polling Interval | `500ms` | 클립보드 확인 간격 (200–5000ms) |
-| Max Screenshots | `100` | 최대 보관 수 (초과 시 오래된 것부터 삭제) |
-| Auto Copy Path | `ON` | 캡처 시 파일 경로 자동 복사 |
-| Auto Start | `OFF` | Windows 시작 시 자동 실행 |
-| Language | `한국어` | 한국어 / English |
-| Path Format | `Windows` | Windows / WSL |
+```
+Windows:  C:\Users\you\Pictures\CLIBuddy\screenshot_2026-02-12_14-30-45.png
+WSL:      /mnt/c/Users/you/Pictures/CLIBuddy/screenshot_2026-02-12_14-30-45.png
+```
 
 ### System Tray / 시스템 트레이
 
 | Action | Result |
 |--------|--------|
-| Left-click tray icon | 윈도우 표시/포커스 |
+| 트레이 아이콘 좌클릭 | 윈도우 표시/포커스 |
 | **Monitor Start/Stop** | 클립보드 감시 시작/중단 |
 | **Open Folder** | 스크린샷 저장 폴더 열기 |
 | **Show Window** | 앱 창 표시 |
 | **Quit** | 앱 종료 |
 
-### File Structure / 파일 구조
+---
 
-```
-📁 Pictures/CLIBuddy/
-├── screenshot_2026-02-12_14-30-45.png   ← Saved screenshot
-├── screenshot_2026-02-12_14-28-10.png
-├── latest.png                           ← Always the latest one
-└── 📁 .thumbnails/
-    ├── screenshot_2026-02-12_14-30-45.png   ← 200×200 thumbnail
-    └── screenshot_2026-02-12_14-28-10.png
-```
+## Settings / 설정
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Save Directory | `Pictures/CLIBuddy` | 스크린샷 저장 경로 |
+| Polling Interval | `500ms` | 클립보드 확인 간격 (200–5000ms) |
+| Max Screenshots | `100` | 최대 스크린샷 보관 수 |
+| Auto Copy Path | `ON` | 캡처 시 파일 경로 자동 복사 |
+| Auto Start | `OFF` | Windows 시작 시 자동 실행 |
+| Language | `한국어` | 한국어 / English |
+| Path Format | `Windows` | Windows / WSL |
+| Capture Text | `ON` | 텍스트 클립보드 자동 저장 |
+| Max Text Entries | `50` | 최대 텍스트 기록 수 |
+| Global Shortcut | `Alt+Shift+V` | 앱 표시 단축키 |
 
 ---
 
@@ -137,52 +130,29 @@ Settings에서 기본 경로 형식을 Windows 또는 WSL로 변경할 수 있�
 | Framework | [Tauri 2](https://v2.tauri.app/) |
 | Frontend | React 19, TypeScript, Tailwind CSS 4, Vite 7 |
 | State | Zustand 5 |
-| Backend | Rust (2021 edition) |
+| Backend | Rust 2021 |
 | Clipboard | [arboard](https://crates.io/crates/arboard) |
-| Image Processing | [image](https://crates.io/crates/image) |
+| Image | [image](https://crates.io/crates/image) |
 | Icons | [Lucide React](https://lucide.dev/) |
 
 ---
 
-## Development / 개발
+## Build from Source / 소스에서 빌드
+
+**Prerequisites / 필수 조건:**
+- [Node.js](https://nodejs.org/) ≥ 18
+- [Rust](https://rustup.rs/) ≥ 1.77
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Windows C++ workload)
 
 ```bash
-# Dev server with hot reload
-npm run tauri dev
-
-# Type check
-npx tsc --noEmit
-
-# Build
-npm run tauri build
+git clone https://github.com/xcryptp/cli-buddy.git
+cd cli-buddy
+npm install
+npm run tauri dev       # 개발 모드 (핫 리로드)
+npm run tauri build     # 프로덕션 빌드
 ```
 
-### Project Structure
-
-```
-cli-buddy/
-├── src/                    # Frontend (React + TypeScript)
-│   ├── components/         # UI components
-│   │   ├── Gallery/        # Screenshot gallery (grid, card, preview)
-│   │   ├── StatusBar.tsx   # Top bar (monitoring toggle, count, settings)
-│   │   ├── SettingsPanel.tsx
-│   │   └── common/        # Reusable components
-│   ├── hooks/              # React hooks
-│   ├── stores/             # Zustand store
-│   ├── types/              # TypeScript types + i18n
-│   └── styles/             # Global CSS
-├── src-tauri/              # Backend (Rust)
-│   └── src/
-│       ├── commands/       # Tauri IPC commands
-│       ├── monitor/        # Clipboard watcher (polling thread)
-│       ├── storage/        # File manager + hashing
-│       ├── tray/           # System tray setup
-│       ├── config.rs       # App settings (JSON)
-│       └── state.rs        # Shared app state
-├── package.json
-├── vite.config.ts
-└── src-tauri/tauri.conf.json
-```
+Build output: `src-tauri/target/release/bundle/`
 
 ---
 
@@ -201,5 +171,5 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 ---
 
 <p align="center">
-  Built with Tauri + React + Rust
+  Made by <a href="https://github.com/xcryptp">xcryptp</a> · Built with Tauri + React + Rust
 </p>

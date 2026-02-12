@@ -24,7 +24,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 if state.watcher.is_running() {
                     state.watcher.stop();
                 } else {
-                    state.watcher.start(app.clone(), state.settings.clone());
+                    state.watcher.start(app.clone(), state.settings.clone(), state.text_history.clone());
                 }
             }
             "open_folder" => {

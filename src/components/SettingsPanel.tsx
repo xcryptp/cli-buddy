@@ -50,7 +50,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] shadow-2xl"
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -176,6 +176,37 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               />
             </div>
 
+            {/* Max Text Entries */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--color-text-secondary)]">
+                {t("maxTextEntries")}
+              </label>
+              <input
+                type="number"
+                min={10}
+                max={500}
+                value={settings.max_text_entries}
+                onChange={(e) =>
+                  updateField("max_text_entries", parseInt(e.target.value) || 50)
+                }
+                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-accent)]"
+              />
+            </div>
+
+            {/* Global Shortcut */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--color-text-secondary)]">
+                {t("globalShortcut")}
+              </label>
+              <input
+                type="text"
+                value={settings.global_shortcut}
+                onChange={(e) => updateField("global_shortcut", e.target.value)}
+                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-accent)]"
+                placeholder="Alt+Shift+V"
+              />
+            </div>
+
             {/* Toggles */}
             <div className="space-y-3">
               <label className="flex cursor-pointer items-center justify-between">
@@ -186,6 +217,18 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                   type="checkbox"
                   checked={settings.auto_copy_path}
                   onChange={(e) => updateField("auto_copy_path", e.target.checked)}
+                  className="h-4 w-4 rounded accent-[var(--color-accent)]"
+                />
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  {t("captureText")}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={settings.capture_text}
+                  onChange={(e) => updateField("capture_text", e.target.checked)}
                   className="h-4 w-4 rounded accent-[var(--color-accent)]"
                 />
               </label>
